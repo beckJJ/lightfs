@@ -27,8 +27,11 @@ void dir_func(CLUSTER cluster, METADATA metadata)
 		printf("File open error\n");
 		return;
 	} else {
-		// se o cluster estiver vazio
 		if (!(cluster.flags & 0x01)) {
+			printf("Empty cluster\n");
+		}
+		// se o dir estiver vazio
+		if (!(cluster.flags & 0x02)) { // verificar D
 			printf("<vazio>\n");
 		} else { // percorrer lista de ponteiros até chegar em um vazio
 			i = 0;

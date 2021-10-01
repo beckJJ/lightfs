@@ -23,8 +23,13 @@ typedef struct {
 	INDEX father; // ponteiro para o pai
 	char content[TAM_CONTENT];
 } CLUSTER;
-/* bits de flags: R x x x x x x E 
+/* bits de flags: R x x x x x D C 
+ * R = Root (flag especial para identificar cluster root)
  * x = don't care
- * R = Root (flag especial para identificar root)
- * E = !Empty (0 = empty / 1 = not empty)
+ * x = don't care
+ * x = don't care
+ * x = don't care
+ * x = don't care
+ * D = !(Empty Dir) (0 = empty / 1 = not empty)
+ * C = !(Empty cluster) (0 = empty / 1 = not empty)
  */

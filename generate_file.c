@@ -16,7 +16,7 @@ void createFile(void)
 	strcpy(root.filename, "ROOT");
 	
 	strcpy(root.extension, "DIR");
-	root.flags = 0x80; // R
+	root.flags = 0x81; // R + C
 	// father irrelevante por ter flag root
 	
 	for (i = 0; i < TAM_FILENAME; i++) {
