@@ -3,7 +3,7 @@
 #include <string.h>
 #include <conio.h>
 
-#define TAM_CONTENT 32753
+#define TAM_CONTENT 32752
 #define TAM_FILENAME 9		// 8 + \0
 #define TAM_EXT 4 			// 3 + \0
 
@@ -19,7 +19,8 @@ typedef unsigned char INDEX;
 typedef struct {
 	char filename[TAM_FILENAME]; // 8.3 filename
 	char extension[TAM_EXT];
-	unsigned char flags;	
+	unsigned char flags;
+	INDEX index; // ponteiro para si proprio
 	INDEX father; // ponteiro para o pai
 	char content[TAM_CONTENT];
 } CLUSTER;
