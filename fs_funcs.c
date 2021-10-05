@@ -28,13 +28,22 @@ CLUSTER busca_cluster(INDEX point, METADATA metadata, FILE *arq)
 	return cluster;
 }
 
-void nome_cluster (INDEX point, METADATA metadata, FILE *arq, char n[TAM_FILENAME])
+void nome_cluster(INDEX point, METADATA metadata, FILE *arq, char n[])
 { //recebe um ponteiro e coloca o nome do cluster em n
 	CLUSTER cluster;
 
 	cluster = busca_cluster(point, metadata, arq);
 
 	strcpy(n, cluster.filename);
+}
+
+void ext_cluster(INDEX point, METADATA metadata, FILE *arq, char n[])
+{ //recebe um ponteiro e coloca a extensao do cluster em n
+	CLUSTER cluster;
+
+	cluster = busca_cluster(point, metadata, arq);
+
+	strcpy(n, cluster.extension);
 }
 
 void dir_func(CLUSTER cluster, METADATA metadata)
@@ -134,7 +143,7 @@ void mkdir_func(CLUSTER *cluster, METADATA metadata, char nome[])
 	fclose(lightfs);
 }
 
-void rm_func (CLUSTER *father, METADATA metadata, INDEX point)
+void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 {
 	FILE *lightfs;
 	unsigned long int address;
@@ -150,11 +159,13 @@ void rm_func (CLUSTER *father, METADATA metadata, INDEX point)
 	// testar se o cluster e root
 	if (cluster.flags & 0x80) {
 		printf("Erro: Nao e permitido remover root\n");
+		fclose(lightfs);
 		return;
 	}
 	// testar se o cluster ja esta vazio
 	if (!(cluster.flags & 0x01)) {
 		printf("Erro: Cluster vazio\n");
+		fclose(lightfs);
 		return;
 	}
 	// limpar ponteiro no father
@@ -177,6 +188,7 @@ void rm_func (CLUSTER *father, METADATA metadata, INDEX point)
 		fwrite(father, sizeof(CLUSTER), 1, lightfs);
 	} else {
 		printf("Erro: Cluster nao encontrado\n");
+		fclose(lightfs);
 		return;
 	}
 	// pegar endereco do cluster
@@ -201,13 +213,87 @@ void rm_func (CLUSTER *father, METADATA metadata, INDEX point)
 	fclose(lightfs);
 }
 
+void rename_func(CLUSTER father, METADATA metadata, INDEX point,
+													   char nome[], char ext[])
+{
+	char nome_upper[TAM_FILENAME] = { 0 };
+	char nome2[TAM_FILENAME] = { 0 };
+	char ext_upper[TAM_EXT] = { 0 };
+	char ext2[TAM_EXT] = { 0 };
+	INDEX i, j;
+	CLUSTER cluster;
+	unsigned long int address;
+	FILE *lightfs;
+
+	if (strlen(nome) > TAM_FILENAME) {
+		printf("Erro: nome com mais de 8 caracteres\n");
+		return;
+	}
+	if (strlen(ext) > TAM_EXT) {
+		printf("Erro: extensao com mais de 3 caracteres\n");
+		return;
+	}
+
+	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
+		printf("File open error\n");
+		return;
+	}
+	// colocar nome e ext em maiusculas
+	for (i = 0; i < strlen(nome); i++) {
+		nome_upper[i] = toupper(nome[i]);
+	}
+	for (i = 0; i < strlen(ext); i++) {
+		ext_upper[i] = toupper(ext[i]);
+	}
+	// comparar se tem um cluster com o mesmo nome e ext
+	for (j = 0; father.content[j] != 0; j++) {
+		nome_cluster(father.content[j], metadata, lightfs, nome2);
+		ext_cluster(father.content[j], metadata, lightfs, ext2);
+		
+		if (!(strcmp(nome_upper, nome2)) && !(strcmp(ext_upper, ext2))) {
+			printf("Erro: ja existe um arquivo com esse nome e extensao\n");
+			fclose(lightfs);
+			return;
+		}
+	}
+	// ler cluster do arquivo
+	cluster = busca_cluster(point, metadata, lightfs);
+	// testar se o cluster e root
+	if (cluster.flags & 0x80) {
+		printf("Erro: Nao e permitido renomear root\n");
+		fclose(lightfs);
+		return;
+	}
+	// testar se o cluster esta vazio
+	if (!(cluster.flags & 0x01)) {
+		printf("Erro: Cluster vazio\n");
+		fclose(lightfs);
+		return;
+	}
+	// verificar se a extensao e .DIR
+	if (!(strcmp(cluster.extension, "DIR")) && strcmp(ext_upper, "DIR")) {
+		printf("Erro: Nao e possivel trocar extensao de diretorio\n");
+		fclose(lightfs);
+		return;
+	}
+	// modificar nome e extensao
+	strcpy(cluster.filename, nome_upper);
+	strcpy(cluster.extension, ext_upper);
+	// pegar endereco do cluster
+	address = findAbsAdd(cluster.index, metadata);
+	fseek(lightfs, address, SEEK_SET);
+	// escrever cluster
+	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
+	fclose(lightfs);
+}
+
 int main(void)
 {
 	METADATA metadata;
 	FILE *lightfs;
 	CLUSTER root;
 	unsigned long int root_add;
-	//printf("%d", sizeof(CLUSTER));
+
 	// abrir arquivo
 	if (!(lightfs = fopen("LIGHTFS.BIN","r"))) {
 		printf("File open error\n");
@@ -244,6 +330,17 @@ int main(void)
 
 	printf("\nDepois de tentar remover root:\n");
 	rm_func(&root, metadata, 0);
+
+	printf("\nDepois de renomear 'TESTE2.DIR' para 'PASTA1.DIR':\n");
+	rename_func(root, metadata, 2, "pasta1", "dir");
+	dir_func(root, metadata);
+
+	printf("\nDepois de tentar renomear root:\n");
+	rename_func(root, metadata, 0, "root2", "dir");
+
+	printf("\nDepois de tentar renomear 'PASTA1.DIR' para 'PASTA1.TXT':\n");
+	rename_func(root, metadata, 2, "pasta1", "txt");
+	dir_func(root, metadata);
 
 	return 0;
 }
