@@ -10,13 +10,13 @@ char isroot (CLUSTER cluster)
 	return ((cluster.flags & 0x80) && 1);
 }
 
-unsigned long int findAbsAdd(char point, METADATA metadata)
+unsigned long int findAbsAdd(INDEX point, METADATA metadata)
 {
 	// AbsAdd = first_cluster + point * cluster_size
 	return (long)(metadata.first_cluster + (point * metadata.cluster_size));
 }
 
-CLUSTER busca_cluster(char point, METADATA metadata, FILE *arq)
+CLUSTER busca_cluster(INDEX point, METADATA metadata, FILE *arq)
 {
 	CLUSTER cluster;
 	unsigned long int absAdd = findAbsAdd(point, metadata);
@@ -28,7 +28,7 @@ CLUSTER busca_cluster(char point, METADATA metadata, FILE *arq)
 	return cluster;
 }
 
-void nome_cluster (char point, METADATA metadata, FILE *arq, char n[TAM_FILENAME])
+void nome_cluster (INDEX point, METADATA metadata, FILE *arq, char n[TAM_FILENAME])
 { //recebe um ponteiro e coloca o nome do cluster em n
 	CLUSTER cluster;
 
@@ -57,14 +57,8 @@ void dir_func(CLUSTER cluster, METADATA metadata)
 		} else { // percorrer lista de ponteiros até chegar em um vazio
 			i = 0;
 			while (cluster.content[i]) {
-				// encontrar o endereco do primeiro ponteiro de cluster
-				//absAdd = findAbsAdd(cluster.content[i], metadata);
-				// encontrar cluster no arquivo
-				//fseek(lightfs, absAdd, SEEK_SET);
-				// copiar cluster do arquivo para a memoria
 				sub = busca_cluster(cluster.content[i], metadata, lightfs);
-				//fread(&sub, sizeof(CLUSTER), 1, lightfs);
-				// imprimir nome do cluster
+
 				printf("%s.%s\n", sub.filename, sub.extension);
 				i++;
 			}
@@ -140,6 +134,73 @@ void mkdir_func(CLUSTER *cluster, METADATA metadata, char nome[])
 	fclose(lightfs);
 }
 
+void rm_func (CLUSTER *father, METADATA metadata, INDEX point)
+{
+	FILE *lightfs;
+	unsigned long int address;
+	CLUSTER cluster;
+	int i;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return;
+	}
+	// receber cluster do ponteiro
+	cluster = busca_cluster(point, metadata, lightfs);
+	// testar se o cluster e root
+	if (cluster.flags & 0x80) {
+		printf("Erro: Nao e permitido remover root\n");
+		return;
+	}
+	// testar se o cluster ja esta vazio
+	if (!(cluster.flags & 0x01)) {
+		printf("Erro: Cluster vazio\n");
+		return;
+	}
+	// limpar ponteiro no father
+	i = 0;
+	while (father->content[i] != cluster.index && i < TAM_CONTENT) {
+		i++;
+	}
+	if (father->content[i] == cluster.index) {
+		father->content[i] = 0;
+		do {
+			father->content[i] = father->content[i+1];
+			i++;
+		} while (father->content[i]);
+		if (father->content[0] == 0) {
+			father->flags &= 0xFD; // limpar nas flags
+		}
+		// escrever novo father no arquivo
+		address = findAbsAdd(father->index, metadata);
+		fseek(lightfs, address, SEEK_SET);
+		fwrite(father, sizeof(CLUSTER), 1, lightfs);
+	} else {
+		printf("Erro: Cluster nao encontrado\n");
+		return;
+	}
+	// pegar endereco do cluster
+	address = findAbsAdd(cluster.index, metadata);
+	fseek(lightfs, address, SEEK_SET);
+	// limpar cluster
+	for (i = 0; i < TAM_FILENAME; i++) {
+		cluster.filename[i] = 0;
+	}
+	for (i = 0; i < TAM_EXT; i++) {
+		cluster.extension[i] = 0;
+	}
+	for (i = 0; i < TAM_CONTENT; i++) {
+		cluster.content[i] = 0;
+	}
+	cluster.flags = 0;
+	cluster.father = 0;
+	cluster.index = 0;
+	// escrever cluster limpo
+	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
+
+	fclose(lightfs);
+}
+
 int main(void)
 {
 	METADATA metadata;
@@ -166,14 +227,23 @@ int main(void)
 	}
 	fclose(lightfs);
 	printf("%s.%s\n", root.filename, root.extension);
-	printf("Antes de criar dir:\n");
+
+	printf("\nAntes de criar dirs:\n");
 	dir_func(root, metadata);
-	printf("Depois de criar dir:\n");
+	
 	mkdir_func(&root, metadata, "teste");
 	mkdir_func(&root, metadata, "teste2");
 	mkdir_func(&root, metadata, "asdfasfd");
 	mkdir_func(&root, metadata, "qwertyuiop");
+	printf("\nDepois de criar dirs:\n");
 	dir_func(root, metadata);
+
+	printf("\nDepois de remover cluster TESTE:\n");
+	rm_func(&root, metadata, 1);
+	dir_func(root, metadata);
+
+	printf("\nDepois de tentar remover root:\n");
+	rm_func(&root, metadata, 0);
 
 	return 0;
 }

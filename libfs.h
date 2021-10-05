@@ -31,6 +31,6 @@ typedef struct {
  * x = don't care
  * x = don't care
  * x = don't care
- * D = !(Empty Dir) (0 = empty / 1 = not empty)
+ * D = !(Empty Dir/File) (0 = empty / 1 = not empty)
  * C = !(Empty cluster) (0 = empty / 1 = not empty)
  */
