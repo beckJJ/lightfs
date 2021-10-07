@@ -76,22 +76,33 @@ void dir_func(CLUSTER cluster, METADATA metadata)
 	fclose(lightfs);
 }
 
-void mkdir_func(CLUSTER *cluster, METADATA metadata, char nome[])
-{
+void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
+{ // mesma funcao para mkfile e mkdir, "everything is a file"
 	INDEX i, j;
 	unsigned long int absAdd;
 	FILE *lightfs;
 	CLUSTER new;
 	char nome_upper[TAM_FILENAME] = { 0 };
 	char nome2[TAM_FILENAME] = { 0 };
+	char ext_upper[TAM_EXT] = { 0 };
+	char ext2[TAM_EXT] = { 0 };
 	
 	if (strlen(nome) > TAM_FILENAME) {
-		printf("Erro: nome do diretorio com mais de 8 caracteres\n");
+		printf("Erro: nome com mais de 8 caracteres\n");
 		return;
 	}
-	
+
+	if (strlen(ext) > TAM_EXT) {
+		printf("Erro: extensao com mais de 3 caracteres\n");
+		return;
+	}
+	// nome em maiusculas
 	for (i = 0; i < strlen(nome); i++) {
 		nome_upper[i] = toupper(nome[i]);
+	}
+	// ext em maiusculas
+	for (i = 0; i < strlen(ext); i++) {
+		ext_upper[i] = toupper(ext[i]);
 	}
 	
 	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
@@ -111,17 +122,18 @@ void mkdir_func(CLUSTER *cluster, METADATA metadata, char nome[])
 		if (!(new.flags & 0x01)) { // se encontrou cluster livre
 			//chegar no primeiro bloco vazio do pai
 			for (j = 0; cluster->content[j] != 0; j++) {
-				// comparar se tem um dir com o mesmo nome
+				// comparar se tem um arquivo com o mesmo nome e extensao
 				nome_cluster(cluster->content[j], metadata, lightfs, nome2);
-				if (strcmp(nome_upper, nome2) == 0) {
-					printf("Erro: ja existe um diretorio com esse nome\n");
+				ext_cluster(cluster->content[j], metadata, lightfs, ext2);
+				if (!strcmp(nome_upper, nome2) && !strcmp(ext_upper, ext2)) {
+					printf("Erro: ja existe um arquivo com esse nome e extensao\n");
 					fclose(lightfs);
 					return;
 				}
 			}
 
 			strcpy(new.filename, nome_upper);
-			strcpy(new.extension, "DIR");
+			strcpy(new.extension, ext_upper);
 			new.flags = 0x01;
 			new.index = i;
 			new.father = cluster->index;
@@ -317,14 +329,15 @@ int main(void)
 	printf("\nAntes de criar dirs:\n");
 	dir_func(root, metadata);
 	
-	mkdir_func(&root, metadata, "teste");
-	mkdir_func(&root, metadata, "teste2");
-	mkdir_func(&root, metadata, "asdfasfd");
-	mkdir_func(&root, metadata, "qwertyuiop");
+	mk_func(&root, metadata, "teste", "dir");
+	mk_func(&root, metadata, "teste2", "dir");
+	mk_func(&root, metadata, "asdfasfd", "dir");
+	mk_func(&root, metadata, "qwertyuiop", "dir");
+
 	printf("\nDepois de criar dirs:\n");
 	dir_func(root, metadata);
 
-	printf("\nDepois de remover cluster TESTE:\n");
+	printf("\nDepois de remover TESTE.DIR:\n");
 	rm_func(&root, metadata, 1);
 	dir_func(root, metadata);
 
@@ -341,6 +354,13 @@ int main(void)
 	printf("\nDepois de tentar renomear 'PASTA1.DIR' para 'PASTA1.TXT':\n");
 	rename_func(root, metadata, 2, "pasta1", "txt");
 	dir_func(root, metadata);
+	
+	printf("\nDepois de criar FILE.TXT:\n");
+	mk_func(&root, metadata, "file", "txt");
+	dir_func(root, metadata);
 
+	printf("\nDepois de renomear FILE.TXT para FILE2.TXT:\n");
+	rename_func(root, metadata, 1, "file2", "txt");
+	dir_func(root, metadata);
 	return 0;
 }
