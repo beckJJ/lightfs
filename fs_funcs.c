@@ -299,6 +299,40 @@ void rename_func(CLUSTER father, METADATA metadata, INDEX point,
 	fclose(lightfs);
 }
 
+void edit_func(METADATA metadata, INDEX point, char content[])
+{
+	CLUSTER cluster;
+	unsigned long int address;
+	FILE *lightfs;
+
+	if (strlen(content) > TAM_CONTENT) {
+		printf("Erro: Arquivo muito grande.\n");
+		return;
+	}	
+
+	// abrir arquivo
+	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
+		printf("File open error\n");
+		return;
+	}
+	// carregar cluster na memoria
+	cluster = busca_cluster(point, metadata, lightfs);
+	// verificar se e dir
+	if (strcmp(cluster.extension, "DIR") == 0) {
+		printf("Erro: Nao e possivel modificar conteudo de diretorio\n");
+		return;
+	}
+	// copiar conteudo e modificar flags
+	strcpy(cluster.content, content);
+	cluster.flags |= 0x2;
+	// pegar endereco do cluster
+	address = findAbsAdd(cluster.index, metadata);
+	fseek(lightfs, address, SEEK_SET);
+	// escrever cluster
+	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
+	fclose(lightfs);
+}
+
 int main(void)
 {
 	METADATA metadata;
@@ -362,5 +396,9 @@ int main(void)
 	printf("\nDepois de renomear FILE.TXT para FILE2.TXT:\n");
 	rename_func(root, metadata, 1, "file2", "txt");
 	dir_func(root, metadata);
+	
+	edit_func(metadata, 1, "Testando escrita");
+	edit_func(metadata, 0, "Testando escrita");
+
 	return 0;
 }
