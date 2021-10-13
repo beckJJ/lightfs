@@ -4,11 +4,7 @@
 #include <conio.h>
 #include <ctype.h>
 #include "libfs.h"
-
-char isroot (CLUSTER cluster)
-{
-	return ((cluster.flags & 0x80) && 1);
-}
+#include "libfuncs.h"
 
 unsigned long int findAbsAdd(INDEX point, METADATA metadata)
 {
@@ -96,6 +92,10 @@ void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
 		printf("Erro: extensao com mais de 3 caracteres\n");
 		return;
 	}
+	if (strlen(ext) < TAM_EXT-1) {
+		printf("Erro: extensao com menos de 3 caracteres\n");
+		return;
+	}
 	/* nome em maiusculas */
 	for (i = 0; i < strlen(nome); i++) {
 		nome_upper[i] = toupper(nome[i]);
@@ -154,7 +154,7 @@ void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
 	}
 	fclose(lightfs);
 }
-
+// todo: rm_aux que recebe father, nome e ext e chama rm_func
 void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 {
 	FILE *lightfs;
@@ -332,7 +332,7 @@ void edit_func(METADATA metadata, INDEX point, char content[])
 	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
 	fclose(lightfs);
 }
-
+/*
 int main(void)
 {
 	METADATA metadata;
@@ -340,18 +340,18 @@ int main(void)
 	CLUSTER root;
 	unsigned long int root_add;
 
-	/* abrir arquivo */
+	// abrir arquivo 
 	if (!(lightfs = fopen("LIGHTFS.BIN","r"))) {
 		printf("File open error\n");
 		exit(1);
 	}
-	/* ler metadata do arquivo */
+	// ler metadata do arquivo 
 	if (!fread(&metadata, sizeof(METADATA), 1, lightfs)) {
 		printf("File read error\n");
 		exit(1);
 	}
-	/* copiar cluster root para a memoria */
-	root_add = findAbsAdd(0, metadata); /* root = cluster 0 */
+	// copiar cluster root para a memoria 
+	root_add = findAbsAdd(0, metadata); // root = cluster 0 
 	fseek(lightfs, root_add, SEEK_SET);
 	if (!fread(&root, sizeof(CLUSTER), 1, lightfs)) {
 		printf("File read error\n");
@@ -401,4 +401,4 @@ int main(void)
 	edit_func(metadata, 0, "Testando escrita");
 
 	return 0;
-}
+} */
