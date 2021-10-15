@@ -32,18 +32,35 @@ void print_interface(void)
 	system("cls");
 }
 
+void print_help(void)
+{
+	printf("CD\t- Troca de diretorio\n");
+	printf("DIR\t- Mostra o conteudo do diretorio\n");
+	printf("RM\t- Remove um arquivo ou diretorio\n");
+	printf("MKDIR\t- Cria um diretorio\n");
+	printf("MKFILE\t- Cria um arquivo\n");
+	printf("EDIT\t- Edita o conteudo de um arquivo\n");
+	printf("MOVE\t- Move um arquivo ou diretorio\n");
+	printf("RENAME\t- Renomeia um arquivo ou diretorio\n");
+	printf("HELP\t- Mostra essa pagina de ajuda\n");
+	printf("EXIT\t- Termina a execucao\n");
+}
+
 void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 {
 	char input_lower[MAX_INPUT] = { 0 };
-	char comando[MAX_INPUT] = { 0 };
-	char filename[MAX_INPUT] = { 0 }; 
-	char ext[MAX_INPUT] = { 0 }; 
+	char *comando;
+	char *filename; 
+	char *ext; 
 	int i, j;
 
 	gets(input_lower);
+	if (strlen(input_lower) == 0) {
+		return;
+	}
 	if (strlen(input_lower) > MAX_INPUT) {
 		printf("Erro: Input com mais de 200 caracteres\n");
-		printf("Finalizando execucao...\n");
+	//	return;
 		exit(1);
 	}
 	for (i = 0; i < strlen(input_lower); i++) {
@@ -54,12 +71,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			input[i] = 0;
 		}
 	}
-	i = 0;
-	while (input[i] != 0x20 && input[i] != '\0') {
-		comando[i] = input[i];
-		i++;
-	}
-	comando[i] = '\0';
+	comando = strtok(input, " ");
 
 	if (strcmp(comando, "CD") == 0) {
 		printf(" %s 0", comando);
@@ -70,58 +82,69 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "RM") == 0) {
-		i++;
-		j = 0;
-		do {
-			filename[j] = input[i];
-			i++;
-			j++;
-		} while (input[i] != '\0' && input[i] != '.');
-		if (input[i] == '\0') {
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Arquivo nao informado\n");
+			return;
+		}
+		filename = malloc(strlen(comando));
+		strcpy(filename, comando);
+
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
 			printf("Erro: Extensao nao informada\n");
 			return;
 		}
-		j = 0;
-		i++;
-		do {
-			ext[j] = input[i];
-			i++;
-			j++;
-		} while (input[i] != 0x20 && input[i] != '\0' && input[i] != '.');
+
+		ext = malloc(strlen(comando));
+		strcpy(ext, comando);
+		// ignorar o resto
+		while (comando != NULL) {
+			comando = strtok(NULL, " ");
+		}
+		printf("%s.%s\n", filename, ext);
+
 		return;
 	}
 	if (strcmp(comando, "MKDIR") == 0) {
-		i++;
-		j=0;
-		do {
-			filename[j] = input[i];
-			i++;
-			j++;
-		} while (input[i] != 0x20 && input[i] != '\0' && input[i] != '.');
-		 mk_func(cluster, metadata, filename, "DIR");
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Nome nao informado\n");
+			return;
+		}
+		filename = malloc(strlen(comando));
+		strcpy(filename, comando);
+		// ignorar o resto
+		while (comando != NULL) {
+			comando = strtok(NULL, " ");
+		}
+		mk_func(cluster, metadata, filename, "DIR");
+		printf("Criado diretorio %s.DIR com sucesso.\n", filename);
 		return;
 	}
 	if (strcmp(comando, "MKFILE") == 0) {
-		i++;
-		j = 0;
-		do {
-			filename[j] = input[i];
-			i++;
-			j++;
-		} while (input[i] != '\0' && input[i] != '.');
-		if (input[i] == '\0') {
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Nome nao informado\n");
+			return;
+		}
+		filename = malloc(strlen(comando));
+		strcpy(filename, comando);
+
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
 			printf("Erro: Extensao nao informada\n");
 			return;
 		}
-		j = 0;
-		i++;
-		do {
-			ext[j] = input[i];
-			i++;
-			j++;
-		} while (input[i] != 0x20 && input[i] != '\0' && input[i] != '.');
 
+		ext = malloc(strlen(comando));
+		strcpy(ext, comando);
+		// ignorar o resto
+		while (comando != NULL) {
+			comando = strtok(NULL, " ");
+		}
 		mk_func(cluster, metadata, filename, ext);
+		printf("Criado arquivo %s.%s com sucesso.\n", filename, ext);
 		return;
 	}
 	if (strcmp(comando, "EDIT") == 0) {
@@ -137,12 +160,16 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "HELP") == 0) {
-		printf(" %s 8", comando);
+		print_help();
 		return;
 	}
 	if (strcmp(comando, "EXIT") == 0) {
 		system("cls");
 		exit(0);
+	}
+	else {
+		printf("Comando nao encontrado\n");
+		return;
 	}
 }
 
