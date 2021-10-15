@@ -18,6 +18,8 @@ void createFile(void)
 	strcpy(root.extension, "DIR");
 	root.flags = 0x81; // R + C
 	root.index = 0;
+	root.next = 0;
+	root.prev = 0;
 	// father irrelevante por ter flag root
 	
 	for (i = 0; i < TAM_FILENAME; i++) {
@@ -33,6 +35,8 @@ void createFile(void)
 	empty_cluster.flags = 0;
 	empty_cluster.father = 0;
 	empty_cluster.index = 0;
+	empty_cluster.next = 0;
+	empty_cluster.prev = 0;
 	
 	metadata.index_size = 0x0100; // 256
 	metadata.cluster_size = 0x8000; // 32KB

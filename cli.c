@@ -35,15 +35,16 @@ void print_interface(void)
 void print_help(void)
 {
 	printf("CD\t- Troca de diretorio\n");
+	printf("CLS\t- Limpa a tela\n");
 	printf("DIR\t- Mostra o conteudo do diretorio\n");
-	printf("RM\t- Remove um arquivo ou diretorio\n");
+	printf("EDIT\t- Edita o conteudo de um arquivo\n");
+	printf("HELP\t- Mostra essa pagina de ajuda\n");
 	printf("MKDIR\t- Cria um diretorio\n");
 	printf("MKFILE\t- Cria um arquivo\n");
-	printf("EDIT\t- Edita o conteudo de um arquivo\n");
 	printf("MOVE\t- Move um arquivo ou diretorio\n");
 	printf("RENAME\t- Renomeia um arquivo ou diretorio\n");
-	printf("HELP\t- Mostra essa pagina de ajuda\n");
-	printf("EXIT\t- Termina a execucao\n");
+	printf("RM\t- Remove um arquivo ou diretorio\n");
+	printf("\nEXIT\t- Termina a execucao\n");
 }
 
 void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
@@ -53,15 +54,16 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char *filename; 
 	char *ext; 
 	int i, j;
+	INDEX x;
 
 	gets(input_lower);
 	if (strlen(input_lower) == 0) {
 		return;
 	}
-	if (strlen(input_lower) > MAX_INPUT) {
+	if (strlen(input_lower) >= MAX_INPUT) {
 		printf("Erro: Input com mais de 200 caracteres\n");
-	//	return;
-		exit(1);
+		return;
+		//exit(1);
 	}
 	for (i = 0; i < strlen(input_lower); i++) {
 		input[i] = toupper(input_lower[i]);
@@ -78,6 +80,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "DIR") == 0) {
+		printf("Conteudo do diretorio %s.%s:\n", cluster->filename, cluster->extension);
 		dir_func(*cluster, metadata);
 		return;
 	}
@@ -102,8 +105,9 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		while (comando != NULL) {
 			comando = strtok(NULL, " ");
 		}
-		printf("%s.%s\n", filename, ext);
-
+		if (rm_aux(cluster, metadata, filename, ext)) {
+			printf("Arquivo %s.%s removido com sucesso.\n", filename, ext);
+		}
 		return;
 	}
 	if (strcmp(comando, "MKDIR") == 0) {
@@ -114,12 +118,15 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		}
 		filename = malloc(strlen(comando));
 		strcpy(filename, comando);
+
+
 		// ignorar o resto
 		while (comando != NULL) {
 			comando = strtok(NULL, " ");
 		}
-		mk_func(cluster, metadata, filename, "DIR");
-		printf("Criado diretorio %s.DIR com sucesso.\n", filename);
+		if (mk_func(cluster, metadata, filename, "DIR")) {
+			printf("Criado diretorio %s.DIR com sucesso.\n", filename);
+		}
 		return;
 	}
 	if (strcmp(comando, "MKFILE") == 0) {
@@ -143,8 +150,10 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		while (comando != NULL) {
 			comando = strtok(NULL, " ");
 		}
-		mk_func(cluster, metadata, filename, ext);
-		printf("Criado arquivo %s.%s com sucesso.\n", filename, ext);
+
+		if (mk_func(cluster, metadata, filename, ext)) {
+			printf("Criado arquivo %s.%s com sucesso.\n", filename, ext);
+		}
 		return;
 	}
 	if (strcmp(comando, "EDIT") == 0) {
@@ -161,6 +170,10 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	}
 	if (strcmp(comando, "HELP") == 0) {
 		print_help();
+		return;
+	}
+	if (strcmp(comando, "CLS") == 0) {
+		system("cls");
 		return;
 	}
 	if (strcmp(comando, "EXIT") == 0) {

@@ -14,13 +14,18 @@ void nome_cluster(INDEX point, METADATA metadata, FILE *arq, char n[]);
 
 void ext_cluster(INDEX point, METADATA metadata, FILE *arq, char n[]);
 
-void dir_func(CLUSTER cluster, METADATA metadata);
-
-void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[]);
-
-void rm_func(CLUSTER *father, METADATA metadata, INDEX point);
-
-void rename_func(CLUSTER father, METADATA metadata, INDEX point,
+INDEX busca_file(METADATA metadata, CLUSTER father, FILE *arq,
 													   char nome[], char ext[]);
 
-void edit_func(METADATA metadata, INDEX point, char content[]);
+void dir_func(CLUSTER cluster, METADATA metadata);
+
+int mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[]);
+
+int rm_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[]);
+
+int rm_func(CLUSTER *father, METADATA metadata, INDEX point);
+
+int rename_func(CLUSTER father, METADATA metadata, INDEX point,
+													   char nome[], char ext[]);
+
+int edit_func(METADATA metadata, INDEX point, char content[]);

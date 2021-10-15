@@ -42,6 +42,29 @@ void ext_cluster(INDEX point, METADATA metadata, FILE *arq, char n[])
 	strcpy(n, cluster.extension);
 }
 
+INDEX busca_file(METADATA metadata, CLUSTER father, FILE *arq,
+													   char nome[], char ext[])
+{ /* recebe um nome e extensao e retorna o ponteiro do cluster */
+	CLUSTER cluster; // not working properly when file doesn't exist
+	int i = 0;
+
+	cluster = busca_cluster(father.content[i], metadata, arq);
+	if (!strcmp(cluster.filename, nome) && !strcmp(cluster.extension, ext)) {
+		return cluster.index;
+	}
+
+	while (strcmp(cluster.filename, nome) || strcmp(cluster.extension, ext)) {
+		cluster = busca_cluster(father.content[i], metadata, arq);
+		i++;
+	}
+	if (!strcmp(cluster.filename, nome) && !strcmp(cluster.extension, ext)) {
+		return cluster.index;
+	} else {
+		printf("Erro: Arquivo nao encontrado\n");
+		return 0;
+	}
+}
+
 void dir_func(CLUSTER cluster, METADATA metadata)
 {
 	int i;
@@ -58,13 +81,13 @@ void dir_func(CLUSTER cluster, METADATA metadata)
 		}
 		/* se o dir estiver vazio */
 		if (!(cluster.flags & 0x02)) { /* verificar D */
-			printf("<vazio>\n");
+			printf("\t<vazio>\n");
 		} else { /* percorrer lista de ponteiros até chegar em um vazio */
 			i = 0;
 			while (cluster.content[i]) {
 				sub = busca_cluster(cluster.content[i], metadata, lightfs);
 
-				printf("%s.%s\n", sub.filename, sub.extension);
+				printf("\t%s.%s\n", sub.filename, sub.extension);
 				i++;
 			}
 		}
@@ -72,7 +95,7 @@ void dir_func(CLUSTER cluster, METADATA metadata)
 	fclose(lightfs);
 }
 
-void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
+int mk_func(CLUSTER *father, METADATA metadata, char nome[], char ext[])
 { /* mesma funcao para mkfile e mkdir, "everything is a file" */
 	INDEX i, j;
 	unsigned long int absAdd;
@@ -83,18 +106,18 @@ void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
 	char ext_upper[TAM_EXT] = { 0 };
 	char ext2[TAM_EXT] = { 0 };
 	
-	if (strlen(nome) > TAM_FILENAME) {
-		printf("Erro: nome com mais de 8 caracteres\n");
-		return;
+	if (strlen(nome) >= TAM_FILENAME) {
+		printf("Erro: Nome com mais de 8 caracteres\n");
+		return 0;
 	}
 
-	if (strlen(ext) > TAM_EXT) {
-		printf("Erro: extensao com mais de 3 caracteres\n");
-		return;
+	if (strlen(ext) >= TAM_EXT) {
+		printf("Erro: Extensao com mais de 3 caracteres\n");
+		return 0;
 	}
 	if (strlen(ext) < TAM_EXT-1) {
-		printf("Erro: extensao com menos de 3 caracteres\n");
-		return;
+		printf("Erro: Extensao com menos de 3 caracteres\n");
+		return 0;
 	}
 	/* nome em maiusculas */
 	for (i = 0; i < strlen(nome); i++) {
@@ -107,7 +130,7 @@ void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
 	
 	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
 		printf("File open error\n");
-		return;
+		return 0;
 	} else {
 		/* procurar primeiro cluster livre */
 		i = 0;
@@ -121,14 +144,14 @@ void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
 
 		if (!(new.flags & 0x01)) { /* se encontrou cluster livre */
 			/* chegar no primeiro bloco vazio do pai */
-			for (j = 0; cluster->content[j] != 0; j++) {
+			for (j = 0; father->content[j] != 0; j++) {
 				/* comparar se tem um arquivo com o mesmo nome e extensao */
-				nome_cluster(cluster->content[j], metadata, lightfs, nome2);
-				ext_cluster(cluster->content[j], metadata, lightfs, ext2);
+				nome_cluster(father->content[j], metadata, lightfs, nome2);
+				ext_cluster(father->content[j], metadata, lightfs, ext2);
 				if (!strcmp(nome_upper, nome2) && !strcmp(ext_upper, ext2)) {
-					printf("Erro: ja existe um arquivo com esse nome e extensao\n");
+					printf("Erro: Ja existe um arquivo com esse nome e extensao\n");
 					fclose(lightfs);
-					return;
+					return 0;
 				}
 			}
 
@@ -136,26 +159,51 @@ void mk_func(CLUSTER *cluster, METADATA metadata, char nome[], char ext[])
 			strcpy(new.extension, ext_upper);
 			new.flags = 0x01;
 			new.index = i;
-			new.father = cluster->index;
+			new.next = new.index;
+			new.prev = new.index;
+			new.father = father->index;
 
 			absAdd = findAbsAdd(i, metadata);
 			fseek(lightfs, absAdd, SEEK_SET);
 			fwrite(&new, sizeof(CLUSTER), 1, lightfs);
 
-			cluster->content[j] = new.index;
-			cluster->flags |= 0x02;
-			absAdd = findAbsAdd(cluster->index, metadata);
+			father->content[j] = new.index;
+			father->flags |= 0x02;
+			absAdd = findAbsAdd(father->index, metadata);
 			fseek(lightfs, absAdd, SEEK_SET);
-			fwrite(cluster, sizeof(CLUSTER), 1, lightfs);
+			fwrite(father, sizeof(CLUSTER), 1, lightfs);
 
 		} else { /* se nao encontrou */
 			printf("Sistema de arquivos cheio!\n");
+			return 0;
 		}
 	}
 	fclose(lightfs);
+	return 1;
 }
-// todo: rm_aux que recebe father, nome e ext e chama rm_func
-void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
+int rm_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
+{
+	INDEX i;
+	FILE *lightfs;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return 0;
+	} else {
+		i = busca_file(metadata, *father, lightfs, nome, ext);
+		printf("%d\n, i");
+		fclose(lightfs);
+		if (i) {
+			rm_func(father, metadata, i);
+			return 1;
+		} else {
+			printf("Erro\n");
+			return 0;
+		}
+	}
+}
+
+int rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 {
 	FILE *lightfs;
 	unsigned long int address;
@@ -164,7 +212,7 @@ void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 
 	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
 		printf("File open error\n");
-		return;
+		return 0;
 	}
 	/* receber cluster do ponteiro */
 	cluster = busca_cluster(point, metadata, lightfs);
@@ -172,13 +220,19 @@ void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 	if (cluster.flags & 0x80) {
 		printf("Erro: Nao e permitido remover root\n");
 		fclose(lightfs);
-		return;
+		return 0;
 	}
 	/* testar se o cluster ja esta vazio */
 	if (!(cluster.flags & 0x01)) {
 		printf("Erro: Cluster vazio\n");
 		fclose(lightfs);
-		return;
+		return 0;
+	}
+	/* testar se o diretorio nao esta vazio */
+	if ((cluster.flags & 0x02) && (strcmp(cluster.extension, "DIR") == 0)) {
+		printf("Erro: O diretorio nao esta vazio\n");
+		fclose(lightfs);
+		return 0;
 	}
 	/* limpar ponteiro no father */
 	i = 0;
@@ -201,11 +255,15 @@ void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 	} else {
 		printf("Erro: Cluster nao encontrado\n");
 		fclose(lightfs);
-		return;
+		return 0;
 	}
 	/* pegar endereco do cluster */
 	address = findAbsAdd(cluster.index, metadata);
 	fseek(lightfs, address, SEEK_SET);
+	/* remover recursivamente todos clusters do arquivo */
+	if (cluster.next != cluster.index) {
+		rm_func(father, metadata, cluster.next); // testar depois
+	}
 	/* limpar cluster */
 	for (i = 0; i < TAM_FILENAME; i++) {
 		cluster.filename[i] = 0;
@@ -219,13 +277,16 @@ void rm_func(CLUSTER *father, METADATA metadata, INDEX point)
 	cluster.flags = 0;
 	cluster.father = 0;
 	cluster.index = 0;
+	cluster.next = 0;
+	cluster.prev = 0;
 	/* escrever cluster limpo */
 	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
 
 	fclose(lightfs);
+	return 1;
 }
 
-void rename_func(CLUSTER father, METADATA metadata, INDEX point,
+int rename_func(CLUSTER father, METADATA metadata, INDEX point,
 													   char nome[], char ext[])
 {
 	char nome_upper[TAM_FILENAME] = { 0 };
@@ -239,16 +300,16 @@ void rename_func(CLUSTER father, METADATA metadata, INDEX point,
 
 	if (strlen(nome) > TAM_FILENAME) {
 		printf("Erro: nome com mais de 8 caracteres\n");
-		return;
+		return 0;
 	}
 	if (strlen(ext) > TAM_EXT) {
 		printf("Erro: extensao com mais de 3 caracteres\n");
-		return;
+		return 0;
 	}
 
 	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
 		printf("File open error\n");
-		return;
+		return 0;
 	}
 	/* colocar nome e ext em maiusculas */
 	for (i = 0; i < strlen(nome); i++) {
@@ -265,7 +326,7 @@ void rename_func(CLUSTER father, METADATA metadata, INDEX point,
 		if (!(strcmp(nome_upper, nome2)) && !(strcmp(ext_upper, ext2))) {
 			printf("Erro: ja existe um arquivo com esse nome e extensao\n");
 			fclose(lightfs);
-			return;
+			return 0;
 		}
 	}
 	/* ler cluster do arquivo */
@@ -274,19 +335,19 @@ void rename_func(CLUSTER father, METADATA metadata, INDEX point,
 	if (cluster.flags & 0x80) {
 		printf("Erro: Nao e permitido renomear root\n");
 		fclose(lightfs);
-		return;
+		return 0;
 	}
 	/* testar se o cluster esta vazio */
 	if (!(cluster.flags & 0x01)) {
 		printf("Erro: Cluster vazio\n");
 		fclose(lightfs);
-		return;
+		return 0;
 	}
 	/* verificar se a extensao e .DIR */
 	if (!(strcmp(cluster.extension, "DIR")) && strcmp(ext_upper, "DIR")) {
 		printf("Erro: Nao e possivel trocar extensao de diretorio\n");
 		fclose(lightfs);
-		return;
+		return 0;
 	}
 	/* modificar nome e extensao */
 	strcpy(cluster.filename, nome_upper);
@@ -297,30 +358,99 @@ void rename_func(CLUSTER father, METADATA metadata, INDEX point,
 	/* escrever cluster */
 	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
 	fclose(lightfs);
+	return 1;
 }
 
-void edit_func(METADATA metadata, INDEX point, char content[])
+INDEX mk_next(METADATA metadata, INDEX c_index)
+{ 
+	CLUSTER current, next;
+	FILE *lightfs;
+	int i;
+	unsigned long int absAdd;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
+		printf("File open error\n");
+		return 0;
+	} else {
+		/* load current */
+		current = busca_cluster(c_index, metadata, lightfs);
+
+		/* procurar primeiro cluster livre */
+		i = 0;
+		do {
+			absAdd = findAbsAdd(i, metadata);
+			fseek(lightfs, absAdd, SEEK_SET);
+			fread(&next, sizeof(CLUSTER), 1, lightfs);
+			i++;
+		} while ((next.flags & 0x01) && !feof(lightfs));
+		i--;
+		
+		if (!(next.flags & 0x01)) { /* se encontrou cluster livre */
+			
+			strcpy(next.filename, current.filename);
+			strcpy(next.extension, current.extension);
+			next.flags = 0x01;
+			next.index = i;
+			next.next = next.index;
+			next.prev = current.index;
+			next.father = current.father; 
+
+			absAdd = findAbsAdd(i, metadata);
+			fseek(lightfs, absAdd, SEEK_SET);
+			fwrite(&next, sizeof(CLUSTER), 1, lightfs);
+
+			current.next = next.index;
+			absAdd = findAbsAdd(current.index, metadata);
+			fseek(lightfs, absAdd, SEEK_SET);
+			fwrite(&current, sizeof(CLUSTER), 1, lightfs);
+
+			return next.index;
+
+		} else { /* se nao encontrou */
+			printf("Sistema de arquivos cheio!\n");
+			return 0;
+		}
+	}
+}
+
+int edit_func(METADATA metadata, INDEX point, char content[])
 {
 	CLUSTER cluster;
 	unsigned long int address;
 	FILE *lightfs;
+	char *aux, *aux2;
+	int i;
+	INDEX next;
 
-	if (strlen(content) > TAM_CONTENT) {
-		printf("Erro: Arquivo muito grande.\n");
-		return;
+	/* testar depois */
+	if (strlen(content) > TAM_CONTENT) { /* file spans more than one cluster */
+		/* break the string in two */
+		aux = malloc(TAM_CONTENT);
+		aux2 = malloc(strlen(content - TAM_CONTENT));
+		/* write aux */
+		edit_func(metadata, point, aux);
+		/* create next cluster */
+		next = mk_next(metadata, point);
+		if (next) { /* recursively writes the content */
+			edit_func(metadata, next, aux2);
+		} else {
+			printf("Erro: Arquivo muito grande para o sistema de arquivos\n");
+			return 0;
+		}
+		return 1;
 	}	
 
 	/* abrir arquivo */
 	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
 		printf("File open error\n");
-		return;
+		return 0;
 	}
 	/* carregar cluster na memoria */
 	cluster = busca_cluster(point, metadata, lightfs);
 	/* verificar se e dir */
 	if (strcmp(cluster.extension, "DIR") == 0) {
 		printf("Erro: Nao e possivel modificar conteudo de diretorio\n");
-		return;
+		return 0;
 	}
 	/* copiar conteudo e modificar flags */
 	strcpy(cluster.content, content);
@@ -331,6 +461,7 @@ void edit_func(METADATA metadata, INDEX point, char content[])
 	/* escrever cluster */
 	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
 	fclose(lightfs);
+	return 1;
 }
 /*
 int main(void)
