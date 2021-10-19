@@ -496,6 +496,9 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	INDEX index_aux;
 	char *filename;
 	char *extension;
+	char filename_aux[TAM_FILENAME] = { 0 };
+	char ext_aux[TAM_EXT] = { 0 };
+
 
 	for (i = 0; i < MAX_INPUT; i++) {
 		path_upper[i] = toupper(path[i]);
@@ -504,71 +507,56 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	/* encontrar o cluster de index */
 	aux = busca_cluster(index, metadata, arq);
 	if (strcmp(aux.extension, "DIR") != 0) {
+
 		printf("Erro: Nao e um diretorio\n");
 		return index;
 	}
 
-	str = malloc(strlen(path_upper));
-	
 	str = strtok(path_upper, "/");
-	printf("%s\n", str);
+
 	/* procura o nome em aux */
-	str2 = malloc(strlen(str));
 	strcpy(str2, str);
 	str2 = strtok(NULL,"/");
-	filename = malloc(TAM_FILENAME);
-	extension = malloc(TAM_EXT);
+
 	filename = strtok(str2,".");
 	str2 = strtok(NULL,"/.");
 	extension = strtok(str2,"/");
 
-	printf("%s %s\n", filename, extension);
-	index_aux = busca_file(metadata, aux, arq, filename, extension);
+	if (filename && extension) {
+		index_aux = busca_file(metadata, aux, arq, filename, extension);
+	} else {
+		free(str);
+		free(str2);
+		free(filename);
+		free(extension);
+		return aux.index;
+	}
 
 	if (index_aux) {
 		aux2 = busca_cluster(index_aux, metadata, arq);
+	} else {
+		free(str);
+		free(str2);
+		free(filename);
+		free(extension);
+		return aux.index;
 	}
 
 	str = strtok(NULL, "/ ");
 	if (str) {
+		free(str);
+		free(str2);
+		free(filename);
+		free(extension);
 		return absPath2point(metadata, str, aux2.index, arq);
 	} else {
-		printf("%d\n", aux2.index);
+		free(str);
+		free(str2);
+		free(filename);
+		free(extension);
 		return aux2.index;
 	}
 }
-
-int main(void)
-{
-	METADATA metadata;
-	FILE *lightfs;
-	CLUSTER root;
-	unsigned long int root_add;
-
-	// abrir arquivo 
-	if (!(lightfs = fopen("LIGHTFS.BIN","r"))) {
-		printf("File open error\n");
-		exit(1);
-	}
-	// ler metadata do arquivo 
-	if (!fread(&metadata, sizeof(METADATA), 1, lightfs)) {
-		printf("File read error\n");
-		exit(1);
-	}
-	// copiar cluster root para a memoria 
-	root_add = findAbsAdd(0, metadata); // root = cluster 0 
-	fseek(lightfs, root_add, SEEK_SET);
-	if (!fread(&root, sizeof(CLUSTER), 1, lightfs)) {
-		printf("File read error\n");
-		exit(1);
-	}
-	//printf("Ret com root: %d\n", absPath2point(metadata, "/root.dir/", 0, lightfs));
-	printf("Ret com root/pasta: %d\n", absPath2point(metadata, "/root.dir/pasta.dir", 0, lightfs));
-	fclose(lightfs);
-	return 0;
-}
-
-
 /*
 int main(void)
 {
@@ -594,48 +582,15 @@ int main(void)
 		printf("File read error\n");
 		exit(1);
 	}
+	printf("Ret com root: ");
+	printf("%d\n", absPath2point(metadata, "/root.dir/", 0, lightfs));
+	printf("Ret com root/pasta: ");
+	printf("%d\n", absPath2point(metadata, "/root.dir/pasta.dir", 0, lightfs));
+	printf("Ret com root/pasta1: ");
+	printf("%d\n", absPath2point(metadata, "/root.dir/pasta1.dir", 0, lightfs));
+	printf("Ret com root/pasta2: ");
+	printf("%d\n", absPath2point(metadata, "/root.dir/pasta2.dir", 0, lightfs));
 	fclose(lightfs);
-	printf("%s.%s\n", root.filename, root.extension);
-
-	printf("\nAntes de criar dirs:\n");
-	dir_func(root, metadata);
-	
-	mk_func(&root, metadata, "teste", "dir");
-	mk_func(&root, metadata, "teste2", "dir");
-	mk_func(&root, metadata, "asdfasfd", "dir");
-	mk_func(&root, metadata, "qwertyuiop", "dir");
-
-	printf("\nDepois de criar dirs:\n");
-	dir_func(root, metadata);
-
-	printf("\nDepois de remover TESTE.DIR:\n");
-	rm_func(&root, metadata, 1);
-	dir_func(root, metadata);
-
-	printf("\nDepois de tentar remover root:\n");
-	rm_func(&root, metadata, 0);
-
-	printf("\nDepois de renomear 'TESTE2.DIR' para 'PASTA1.DIR':\n");
-	rename_func(root, metadata, 2, "pasta1", "dir");
-	dir_func(root, metadata);
-
-	printf("\nDepois de tentar renomear root:\n");
-	rename_func(root, metadata, 0, "root2", "dir");
-
-	printf("\nDepois de tentar renomear 'PASTA1.DIR' para 'PASTA1.TXT':\n");
-	rename_func(root, metadata, 2, "pasta1", "txt");
-	dir_func(root, metadata);
-	
-	printf("\nDepois de criar FILE.TXT:\n");
-	mk_func(&root, metadata, "file", "txt");
-	dir_func(root, metadata);
-
-	printf("\nDepois de renomear FILE.TXT para FILE2.TXT:\n");
-	rename_func(root, metadata, 1, "file2", "txt");
-	dir_func(root, metadata);
-	
-	edit_func(metadata, 1, "Testando escrita");
-	edit_func(metadata, 0, "Testando escrita");
-
 	return 0;
-} */
+}
+*/
