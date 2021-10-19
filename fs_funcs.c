@@ -6,6 +6,10 @@
 #include "libfs.h"
 #include "libfuncs.h"
 
+#ifndef MAX_INPUT
+#define MAX_INPUT 200
+#endif
+
 unsigned long int findAbsAdd(INDEX point, METADATA metadata)
 {
 	/* AbsAdd = first_cluster + point * cluster_size */
@@ -45,17 +49,19 @@ void ext_cluster(INDEX point, METADATA metadata, FILE *arq, char n[])
 INDEX busca_file(METADATA metadata, CLUSTER father, FILE *arq,
 													   char nome[], char ext[])
 { /* recebe um nome e extensao e retorna o ponteiro do cluster */
-	CLUSTER cluster; // not working properly when file doesn't exist
+	CLUSTER cluster; 
 	int i = 0;
 
 	cluster = busca_cluster(father.content[i], metadata, arq);
 	if (!strcmp(cluster.filename, nome) && !strcmp(cluster.extension, ext)) {
 		return cluster.index;
 	}
-
 	while (strcmp(cluster.filename, nome) || strcmp(cluster.extension, ext)) {
 		cluster = busca_cluster(father.content[i], metadata, arq);
 		i++;
+		if (i >= 256) {
+			break;
+		}
 	}
 	if (!strcmp(cluster.filename, nome) && !strcmp(cluster.extension, ext)) {
 		return cluster.index;
@@ -191,13 +197,11 @@ int rm_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
 		return 0;
 	} else {
 		i = busca_file(metadata, *father, lightfs, nome, ext);
-		printf("%d\n, i");
 		fclose(lightfs);
 		if (i) {
 			rm_func(father, metadata, i);
 			return 1;
 		} else {
-			printf("Erro\n");
 			return 0;
 		}
 	}
@@ -463,6 +467,108 @@ int edit_func(METADATA metadata, INDEX point, char content[])
 	fclose(lightfs);
 	return 1;
 }
+
+void cd_func(METADATA metadata, INDEX point, CLUSTER *cluster)
+{ /* retorna o cluster do ponteiro, se der erro nao troca o cluster */
+	FILE *lightfs;
+	CLUSTER aux;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
+		printf("File open error\n");
+		return;
+	}
+	aux = busca_cluster(point, metadata, lightfs);
+	if (strcmp(cluster->extension, "DIR") != 0) {
+		printf("Erro: so e possivel trocar para diretorios");
+		return;
+	} else {
+		*cluster = aux;
+	}
+}
+
+INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
+{ /* acho que esta funcionando */
+	CLUSTER aux, aux2;
+	char *str, *str2;
+	char path_upper[MAX_INPUT] = { 0 };
+	int i;
+	int flag;
+	INDEX index_aux;
+	char *filename;
+	char *extension;
+
+	for (i = 0; i < MAX_INPUT; i++) {
+		path_upper[i] = toupper(path[i]);
+	}
+
+	/* encontrar o cluster de index */
+	aux = busca_cluster(index, metadata, arq);
+	if (strcmp(aux.extension, "DIR") != 0) {
+		printf("Erro: Nao e um diretorio\n");
+		return index;
+	}
+
+	str = malloc(strlen(path_upper));
+	
+	str = strtok(path_upper, "/");
+	printf("%s\n", str);
+	/* procura o nome em aux */
+	str2 = malloc(strlen(str));
+	strcpy(str2, str);
+	str2 = strtok(NULL,"/");
+	filename = malloc(TAM_FILENAME);
+	extension = malloc(TAM_EXT);
+	filename = strtok(str2,".");
+	str2 = strtok(NULL,"/.");
+	extension = strtok(str2,"/");
+
+	printf("%s %s\n", filename, extension);
+	index_aux = busca_file(metadata, aux, arq, filename, extension);
+
+	if (index_aux) {
+		aux2 = busca_cluster(index_aux, metadata, arq);
+	}
+
+	str = strtok(NULL, "/ ");
+	if (str) {
+		return absPath2point(metadata, str, aux2.index, arq);
+	} else {
+		printf("%d\n", aux2.index);
+		return aux2.index;
+	}
+}
+
+int main(void)
+{
+	METADATA metadata;
+	FILE *lightfs;
+	CLUSTER root;
+	unsigned long int root_add;
+
+	// abrir arquivo 
+	if (!(lightfs = fopen("LIGHTFS.BIN","r"))) {
+		printf("File open error\n");
+		exit(1);
+	}
+	// ler metadata do arquivo 
+	if (!fread(&metadata, sizeof(METADATA), 1, lightfs)) {
+		printf("File read error\n");
+		exit(1);
+	}
+	// copiar cluster root para a memoria 
+	root_add = findAbsAdd(0, metadata); // root = cluster 0 
+	fseek(lightfs, root_add, SEEK_SET);
+	if (!fread(&root, sizeof(CLUSTER), 1, lightfs)) {
+		printf("File read error\n");
+		exit(1);
+	}
+	//printf("Ret com root: %d\n", absPath2point(metadata, "/root.dir/", 0, lightfs));
+	printf("Ret com root/pasta: %d\n", absPath2point(metadata, "/root.dir/pasta.dir", 0, lightfs));
+	fclose(lightfs);
+	return 0;
+}
+
+
 /*
 int main(void)
 {

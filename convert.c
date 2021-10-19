@@ -13,25 +13,17 @@ void changeEndianness(void)
 		printf("File open error\n");
 		exit(1);
 	} else {
-		fread(&aux, sizeof(char), 1, lightfs);
-		fread(&aux2, sizeof(char), 1, lightfs);
-		index_size[0] = aux2;
-		index_size[1] = aux;
+		fread(&index_size[1], sizeof(char), 1, lightfs);
+		fread(&index_size[0], sizeof(char), 1, lightfs);
 
-		fread(&aux, sizeof(char), 1, lightfs);
-		fread(&aux2, sizeof(char), 1, lightfs);
-		cluster_size[0] = aux2;
-		cluster_size[1] = aux;
+		fread(&cluster_size[1], sizeof(char), 1, lightfs);
+		fread(&cluster_size[0], sizeof(char), 1, lightfs);
 
-		fread(&aux, sizeof(char), 1, lightfs);
-		fread(&aux2, sizeof(char), 1, lightfs);
-		index_start[0] = aux2;
-		index_start[1] = aux;
+		fread(&index_start[1], sizeof(char), 1, lightfs);
+		fread(&index_start[0], sizeof(char), 1, lightfs);
 
-		fread(&aux, sizeof(char), 1, lightfs);
-		fread(&aux2, sizeof(char), 1, lightfs);
-		first_cluster[0] = aux2;
-		first_cluster[1] = aux;
+		fread(&first_cluster[1], sizeof(char), 1, lightfs);
+		fread(&first_cluster[0], sizeof(char), 1, lightfs);
 
 		rewind(lightfs);
 

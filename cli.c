@@ -55,6 +55,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char *ext; 
 	int i, j;
 	INDEX x;
+	void *trash;
 
 	gets(input_lower);
 	if (strlen(input_lower) == 0) {
@@ -79,7 +80,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		printf(" %s 0", comando);
 		return;
 	}
-	if (strcmp(comando, "DIR") == 0) {
+	if (strcmp(comando, "DIR") == 0 || strcmp(comando, "LS")  == 0) {
 		printf("Conteudo do diretorio %s.%s:\n", cluster->filename, cluster->extension);
 		dir_func(*cluster, metadata);
 		return;
@@ -103,10 +104,12 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		strcpy(ext, comando);
 		// ignorar o resto
 		while (comando != NULL) {
-			comando = strtok(NULL, " ");
+			comando = strtok(NULL, "");
 		}
 		if (rm_aux(cluster, metadata, filename, ext)) {
 			printf("Arquivo %s.%s removido com sucesso.\n", filename, ext);
+		} else {
+			//printf("Ocorreu um erro removendo o arquivo.\n");
 		}
 		return;
 	}
