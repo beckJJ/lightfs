@@ -37,6 +37,7 @@ void print_help(void)
 	printf("CD\t- Troca de diretorio\n");
 	printf("CLS\t- Limpa a tela\n");
 	printf("DIR\t- Mostra o conteudo do diretorio\n");
+	printf("DISP\t- Mostra o conteudo de um arquivo\n");
 	printf("EDIT\t- Edita o conteudo de um arquivo\n");
 	printf("HELP\t- Mostra essa pagina de ajuda\n");
 	printf("MKDIR\t- Cria um diretorio\n");
@@ -54,8 +55,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char *filename; 
 	char *ext; 
 	int i, j;
-	INDEX x;
-	void *trash;
+	INDEX index_aux;
 
 	gets(input_lower);
 	if (strlen(input_lower) == 0) {
@@ -77,7 +77,8 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	comando = strtok(input, " ");
 
 	if (strcmp(comando, "CD") == 0) {
-		printf(" %s 0", comando);
+		comando = strtok(NULL, " ");
+		cd_aux(metadata, comando, cluster);
 		return;
 	}
 	if (strcmp(comando, "DIR") == 0 || strcmp(comando, "LS")  == 0) {
@@ -108,8 +109,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		}
 		if (rm_aux(cluster, metadata, filename, ext)) {
 			printf("Arquivo %s.%s removido com sucesso.\n", filename, ext);
-		} else {
-			//printf("Ocorreu um erro removendo o arquivo.\n");
 		}
 		return;
 	}
@@ -121,7 +120,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		}
 		filename = malloc(strlen(comando));
 		strcpy(filename, comando);
-
 
 		// ignorar o resto
 		while (comando != NULL) {
@@ -160,6 +158,28 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "EDIT") == 0) {
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Nome nao informado\n");
+			return;
+		}
+		filename = malloc(strlen(comando));
+		strcpy(filename, comando);
+
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
+			printf("Erro: Extensao nao informada\n");
+			return;
+		}
+
+		ext = malloc(strlen(comando));
+		strcpy(ext, comando);
+
+		comando = strtok(NULL, "\"");
+		printf(" %s\n", comando);
+		return;
+	}
+	if (strcmp(comando, "DISP") == 0) {
 		printf(" %s 5", comando);
 		return;
 	}
@@ -189,12 +209,44 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	}
 }
 
+void printAbsPath(METADATA metadata, const CLUSTER cluster, CLUSTER root)
+{
+	FILE *arq;
+	CLUSTER aux;
+
+	aux = cluster;
+	
+	// abrir arquivo 
+	if (!(arq = fopen("LIGHTFS.BIN","r"))) {
+		printf("File open error\n");
+		exit(1);
+	}
+
+	printf("\n/%s.%s/", root.filename, root.extension);
+	if (cluster.index == root.index) {
+		printf(">");
+		fclose(arq);
+		return;
+	}
+	while (root.index != aux.index) {
+		while (root.index != aux.father) {
+			aux = busca_cluster(aux.father, metadata, arq);
+		}
+		printf("%s.%s/", aux.filename, aux.extension);
+		root = aux;
+		aux = cluster;
+	}
+	printf(">");
+	fclose(arq);
+	return;
+}
+
 int main(void)
 {
 	char input[MAX_INPUT] = { 0 };
 	METADATA metadata;
 	FILE *lightfs;
-	CLUSTER cluster;
+	CLUSTER cluster, root;
 	unsigned long int root_add;
 
 	// abrir arquivo 
@@ -215,13 +267,14 @@ int main(void)
 		exit(1);
 	}
 	fclose(lightfs);
+	root = cluster;
 
 	print_interface();
-	printf("%s.%s>", cluster.filename, cluster.extension);
+	printAbsPath(metadata, cluster, root);
 
 	while (strcmp(input, "EXIT") != 0) {
 		recebe_input(input, &cluster, metadata);
-		printf("\n%s.%s>", cluster.filename, cluster.extension);
+		printAbsPath(metadata, cluster, root);
 	}
 
 	return 0;

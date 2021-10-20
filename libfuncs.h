@@ -29,3 +29,9 @@ int rename_func(CLUSTER father, METADATA metadata, INDEX point,
 													   char nome[], char ext[]);
 
 int edit_func(METADATA metadata, INDEX point, char content[]);
+
+int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster);
+
+INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq);
+
+int cd_aux(METADATA metadata, char path[], CLUSTER *cluster);

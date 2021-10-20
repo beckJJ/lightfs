@@ -199,8 +199,7 @@ int rm_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
 		i = busca_file(metadata, *father, lightfs, nome, ext);
 		fclose(lightfs);
 		if (i) {
-			rm_func(father, metadata, i);
-			return 1;
+			return rm_func(father, metadata, i);
 		} else {
 			return 0;
 		}
@@ -468,21 +467,22 @@ int edit_func(METADATA metadata, INDEX point, char content[])
 	return 1;
 }
 
-void cd_func(METADATA metadata, INDEX point, CLUSTER *cluster)
+int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster)
 { /* retorna o cluster do ponteiro, se der erro nao troca o cluster */
 	FILE *lightfs;
 	CLUSTER aux;
-
+	
 	if (!(lightfs = fopen("LIGHTFS.BIN","r+"))) {
 		printf("File open error\n");
-		return;
+		return 0;
 	}
 	aux = busca_cluster(point, metadata, lightfs);
-	if (strcmp(cluster->extension, "DIR") != 0) {
-		printf("Erro: so e possivel trocar para diretorios");
-		return;
+	if (strcmp(aux.extension, "DIR") != 0) {
+		printf("Erro: so e possivel trocar para diretorios\n");
+		return 0;
 	} else {
 		*cluster = aux;
+		return 1;
 	}
 }
 
@@ -491,11 +491,11 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	CLUSTER aux, aux2;
 	char *str, *str2;
 	char path_upper[MAX_INPUT] = { 0 };
-	int i;
+	int i, j;
 	int flag;
 	INDEX index_aux;
-	char *filename;
-	char *extension;
+	char filename[TAM_FILENAME] = { 0 };
+	char extension[TAM_EXT] = { 0 };
 	char filename_aux[TAM_FILENAME] = { 0 };
 	char ext_aux[TAM_EXT] = { 0 };
 
@@ -508,27 +508,60 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	aux = busca_cluster(index, metadata, arq);
 	if (strcmp(aux.extension, "DIR") != 0) {
 
-		printf("Erro: Nao e um diretorio\n");
+		//printf("Erro: Nao e um diretorio\n");
 		return index;
 	}
 
-	str = strtok(path_upper, "/");
+	str = malloc(strlen(path_upper));
+	str2 = malloc(strlen(path_upper));
+	strcpy(str, path_upper);
 
-	/* procura o nome em aux */
-	strcpy(str2, str);
-	str2 = strtok(NULL,"/");
+	
+	/* ignorar o primeiro root.dir */
+	i = 0;
+	j = 0;
+	if (str[i] == '/') {
+		i++;
+	}
+	while (str[i] != '/' && str[i] != 0) {
+		i++;
+	}
+	/* pegar o filename do primeiro elemento */
+	if (str[i] == '/') {
+		i++;
+	}
+	while (str[i] != '/' && str[i] != 0) {
+		str2[j] = str[i];
+		i++;
+		j++;
+	}
+	str2[j] = 0;
 
-	filename = strtok(str2,".");
-	str2 = strtok(NULL,"/.");
-	extension = strtok(str2,"/");
+	i = 0;
+	j = 0;
+	while (str2[i] != '.' && i < strlen(str2)) {
+		if (str2[i] == '/') {
+			i++;
+		} else {
+			filename[j] = str2[i];
+			i++;
+			j++;
+		}
+	}
+	filename[j] = 0;
+	i++;
+	j = 0;
+	while (str2[i] != '.' && i <= strlen(str2) && str2[i] != '/') {
+		extension[j] = str2[i];
+		i++;
+		j++;
+	}
 
-	if (filename && extension) {
+	if (filename[0] != 0 && extension[0] != 0) {
 		index_aux = busca_file(metadata, aux, arq, filename, extension);
 	} else {
 		free(str);
 		free(str2);
-		free(filename);
-		free(extension);
 		return aux.index;
 	}
 
@@ -537,26 +570,57 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	} else {
 		free(str);
 		free(str2);
-		free(filename);
-		free(extension);
 		return aux.index;
 	}
 
-	str = strtok(NULL, "/ ");
+	/* ignorar o primeiro root.dir */
+	i = 0;
+	j = 0;
+	if (str[i] == '/') {
+		i++;
+	}
+	while (str[i] != '/' && str[i] != 0) {
+		i++;
+	}
+	/* pegar o caminho a partir do primeiro elemento */
+	while (str[i] != 0) {
+		str2[j] = str[i];
+		i++;
+		j++;
+	}
+	str2[j] = 0;
+
 	if (str) {
 		free(str);
-		free(str2);
-		free(filename);
-		free(extension);
-		return absPath2point(metadata, str, aux2.index, arq);
+		//free(str2);
+		return absPath2point(metadata, str2, aux2.index, arq);
 	} else {
 		free(str);
 		free(str2);
-		free(filename);
-		free(extension);
 		return aux2.index;
 	}
 }
+
+int cd_aux(METADATA metadata, char path[], CLUSTER *cluster)
+{
+	FILE *arq;
+	INDEX index;
+	int i;
+
+	if (!(arq = fopen("LIGHTFS.BIN","r+"))) {
+		printf("File open error\n");
+		return 0;
+	}
+	if (strcmp(path, "..") == 0) { /* voltar para father */
+		*cluster = busca_cluster(cluster->father, metadata, arq);
+		fclose(arq);
+		return 1;
+	}
+	index = absPath2point(metadata, path, 0, arq);
+	fclose(arq);
+	return cd_func(metadata, index, cluster);
+}
+
 /*
 int main(void)
 {
@@ -584,12 +648,8 @@ int main(void)
 	}
 	printf("Ret com root: ");
 	printf("%d\n", absPath2point(metadata, "/root.dir/", 0, lightfs));
-	printf("Ret com root/pasta: ");
-	printf("%d\n", absPath2point(metadata, "/root.dir/pasta.dir", 0, lightfs));
-	printf("Ret com root/pasta1: ");
-	printf("%d\n", absPath2point(metadata, "/root.dir/pasta1.dir", 0, lightfs));
-	printf("Ret com root/pasta2: ");
-	printf("%d\n", absPath2point(metadata, "/root.dir/pasta2.dir", 0, lightfs));
+	printf("Ret com root/pasta/asdf: ");
+	printf("%d\n", absPath2point(metadata, "/root.dir/pasta.dir/asdf.dir", 0, lightfs));
 	fclose(lightfs);
 	return 0;
 }
