@@ -487,7 +487,7 @@ int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster)
 }
 
 INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
-{ /* acho que esta funcionando */
+{
 	CLUSTER aux, aux2;
 	char *str, *str2;
 	char path_upper[MAX_INPUT] = { 0 };
@@ -619,6 +619,65 @@ int cd_aux(METADATA metadata, char path[], CLUSTER *cluster)
 	index = absPath2point(metadata, path, 0, arq);
 	fclose(arq);
 	return cd_func(metadata, index, cluster);
+}
+
+
+int edit_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[],
+																char content[])
+{
+	INDEX i;
+	FILE *lightfs;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return 0;
+	} else {
+		i = busca_file(metadata, *father, lightfs, nome, ext);
+		fclose(lightfs);
+		if (i) {
+			return edit_func(metadata, i, content);
+		} else {
+			return 0;
+		}
+	}
+}
+
+void disp_func(METADATA metadata, INDEX point)
+{
+	CLUSTER cluster;
+	FILE *arq;
+
+	if (!(arq = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return;
+	}
+	cluster = busca_cluster(point, metadata, arq);
+	if (strcmp(cluster.extension, "DIR") == 0) {
+		printf("Conteudo do diretorio %s.%s:\n", cluster.filename, cluster.extension);
+		dir_func(cluster, metadata);
+	} else if (cluster.flags & 0x2) {
+		printf("Conteudo do arquivo %s.%s:\n", cluster.filename, cluster.extension);
+		printf("%s\n", cluster.content);
+	} else {
+		printf("Conteudo do arquivo %s.%s:\n", cluster.filename, cluster.extension);
+		printf("<Arquivo vazio>\n");
+	}
+	fclose(arq);
+}
+
+void disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
+{
+	INDEX i;
+	FILE *lightfs;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return;
+	}
+	i = busca_file(metadata, *father, lightfs, nome, ext);
+	fclose(lightfs);
+
+	disp_func(metadata, i);
 }
 
 /*

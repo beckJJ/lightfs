@@ -53,6 +53,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char input_lower[MAX_INPUT] = { 0 };
 	char *comando;
 	char *filename; 
+	char *input_aux;
 	char *ext; 
 	int i, j;
 	INDEX index_aux;
@@ -66,6 +67,8 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 		//exit(1);
 	}
+	input_aux = malloc(strlen(input_lower));
+	//strcpy(input_aux, input_lower);
 	for (i = 0; i < strlen(input_lower); i++) {
 		input[i] = toupper(input_lower[i]);
 	}
@@ -176,11 +179,34 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		strcpy(ext, comando);
 
 		comando = strtok(NULL, "\"");
-		printf(" %s\n", comando);
+		input_aux = strtok(input_lower, " ");
+		input_aux = strtok(NULL, " ");
+		input_aux = strtok(NULL, "\"");
+
+		if (edit_aux(cluster, metadata, filename, ext, input_aux)) {
+			printf("Arquivo %s.%s editado com sucesso.\n", filename, ext);
+		}
 		return;
 	}
 	if (strcmp(comando, "DISP") == 0) {
-		printf(" %s 5", comando);
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Nome nao informado\n");
+			return;
+		}
+		filename = malloc(strlen(comando));
+		strcpy(filename, comando);
+
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
+			printf("Erro: Extensao nao informada\n");
+			return;
+		}
+
+		ext = malloc(strlen(comando));
+		strcpy(ext, comando);
+
+		disp_aux(cluster, metadata, filename, ext);
 		return;
 	}
 	if (strcmp(comando, "MOVE") == 0) {

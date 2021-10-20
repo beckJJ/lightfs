@@ -35,3 +35,8 @@ int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster);
 INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq);
 
 int cd_aux(METADATA metadata, char path[], CLUSTER *cluster);
+
+int edit_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[],
+																char content[]);
+
+void disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[]);
