@@ -52,9 +52,9 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 {
 	char input_lower[MAX_INPUT] = { 0 };
 	char *comando;
-	char *filename; 
+	char *filename, *filename_new; 
 	char *input_aux;
-	char *ext; 
+	char *ext, *ext_new; 
 	char *path;
 	int i, j;
 	INDEX index_aux;
@@ -228,7 +228,9 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 
-		disp_aux(cluster, metadata, filename, ext);
+		if (!disp_aux(cluster, metadata, filename, ext)) {
+			printf("Erro: Arquivo nao encontrado\n");
+		}
 		return;
 	}
 	if (strcmp(comando, "MOVE") == 0) {
@@ -236,7 +238,49 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "RENAME") == 0) {
-		printf(" %s 7", comando);
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Arquivo nao informado\n");
+			return;
+		}
+		filename = malloc(strlen(comando));
+		strcpy(filename, comando);
+
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
+			printf("Erro: Extensao nao informada\n");
+			return;
+		}
+		ext = malloc(strlen(comando));
+		strcpy(ext, comando);
+		
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Novo nome nao informado\n");
+			return;
+		}
+		filename_new = malloc(strlen(comando));
+		strcpy(filename_new, comando);
+		
+		comando = strtok(NULL, ".");
+		if (comando == NULL) {
+			printf("Erro: Nova extensao nao informada\n");
+			return;
+		}
+		ext_new = malloc(strlen(comando));
+		strcpy(ext_new, comando);
+
+		// ignorar o resto
+		while (comando != NULL) {
+			comando = strtok(NULL, "");
+		}
+		if (rename_aux(cluster, metadata, filename, ext, filename_new, ext_new)) {
+			printf("Arquivo %s.%s renomeado para %s.%s com sucesso.\n", 
+										 filename, ext, filename_new, ext_new);
+		} else {
+			printf("Erro: Arquivo nao encontrado\n");
+		}
+
 		return;
 	}
 	if (strcmp(comando, "HELP") == 0) {

@@ -37,6 +37,9 @@ INDEX absPath2point(METADATA metadata, const char path[], INDEX index, FILE *arq
 int cd_aux(METADATA metadata, char path[], CLUSTER *cluster);
 
 int edit_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[],
-																char content[]);
+															   char content[]);
 
-void disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[]);
+int disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[]);
+
+int rename_aux(CLUSTER *father, METADATA metadata, char nome_old[],
+							  char ext_old[], char nome_new[], char ext_new[]);

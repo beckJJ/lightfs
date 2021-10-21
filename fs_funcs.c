@@ -677,26 +677,53 @@ void disp_func(METADATA metadata, INDEX point)
 	fclose(arq);
 }
 
-void disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
+int disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
 {
 	INDEX i;
 	FILE *lightfs;
 
 	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
 		printf("File open error\n");
-		return;
+		return 0;
 	}
 	i = busca_file(metadata, *father, lightfs, nome, ext);
 	fclose(lightfs);
 	if (i == 0) {
 		if (strcmp(nome, "ROOT") == 0 && strcmp(ext, "DIR") == 0) {
 			disp_func(metadata, i);
+			return 1;
 		} else {
-			return;
+			return 0;
 		}
 	}
 	disp_func(metadata, i);
+	return 1;
 }
+
+int rename_aux(CLUSTER *father, METADATA metadata, char nome_old[],
+							   char ext_old[], char nome_new[], char ext_new[])
+{
+	INDEX i;
+	FILE *lightfs;
+
+	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return 0;
+	}
+	i = busca_file(metadata, *father, lightfs, nome_old, ext_old);
+	fclose(lightfs);
+	if (i == 0) {
+		if (strcmp(nome_old, "ROOT") == 0 && strcmp(ext_old, "DIR") == 0) {
+			rename_func(*father, metadata, i, nome_new, ext_new);
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	rename_func(*father, metadata, i, nome_new, ext_new);
+	return 1;
+}
+
 
 /*
 int main(void)
