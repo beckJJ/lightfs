@@ -32,7 +32,7 @@ int edit_func(METADATA metadata, INDEX point, char content[]);
 
 int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster);
 
-INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq);
+INDEX absPath2point(METADATA metadata, const char path[], INDEX index, FILE *arq);
 
 int cd_aux(METADATA metadata, char path[], CLUSTER *cluster);
 

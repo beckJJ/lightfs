@@ -486,10 +486,12 @@ int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster)
 	}
 }
 
-INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
+INDEX absPath2point(METADATA metadata, const char path[], INDEX index, FILE *arq)
 {
 	CLUSTER aux, aux2;
-	char *str, *str2;
+	//char *str, *str2;
+	char str[MAX_INPUT] = { 0 };
+	char str2[MAX_INPUT] = { 0 };
 	char path_upper[MAX_INPUT] = { 0 };
 	int i, j;
 	int flag;
@@ -499,24 +501,21 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	char filename_aux[TAM_FILENAME] = { 0 };
 	char ext_aux[TAM_EXT] = { 0 };
 
-
-	for (i = 0; i < MAX_INPUT; i++) {
+	if (path[0] == 0) {
+		return index;
+	}
+	for (i = 0; path[i] != 0; i++) {
 		path_upper[i] = toupper(path[i]);
 	}
 
 	/* encontrar o cluster de index */
 	aux = busca_cluster(index, metadata, arq);
+	
 	if (strcmp(aux.extension, "DIR") != 0) {
-
-		//printf("Erro: Nao e um diretorio\n");
-		return index;
+		return aux.index;
 	}
 
-	str = malloc(strlen(path_upper));
-	str2 = malloc(strlen(path_upper));
 	strcpy(str, path_upper);
-
-	
 	/* ignorar o primeiro root.dir */
 	i = 0;
 	j = 0;
@@ -539,7 +538,7 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 
 	i = 0;
 	j = 0;
-	while (str2[i] != '.' && i < strlen(str2)) {
+	while (str2[i] != '.' && str2[i] != 0) {
 		if (str2[i] == '/') {
 			i++;
 		} else {
@@ -551,25 +550,20 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	filename[j] = 0;
 	i++;
 	j = 0;
-	while (str2[i] != '.' && i <= strlen(str2) && str2[i] != '/') {
+	while (str2[i] != '.' && str2[i] != 0 && str2[i] != '/') {
 		extension[j] = str2[i];
 		i++;
 		j++;
 	}
-
 	if (filename[0] != 0 && extension[0] != 0) {
 		index_aux = busca_file(metadata, aux, arq, filename, extension);
 	} else {
-		free(str);
-		free(str2);
 		return aux.index;
 	}
 
 	if (index_aux) {
 		aux2 = busca_cluster(index_aux, metadata, arq);
 	} else {
-		free(str);
-		free(str2);
 		return aux.index;
 	}
 
@@ -590,13 +584,9 @@ INDEX absPath2point(METADATA metadata, char path[], INDEX index, FILE *arq)
 	}
 	str2[j] = 0;
 
-	if (str) {
-		free(str);
-		//free(str2);
+	if (str2) {
 		return absPath2point(metadata, str2, aux2.index, arq);
 	} else {
-		free(str);
-		free(str2);
 		return aux2.index;
 	}
 }
@@ -605,9 +595,10 @@ int cd_aux(METADATA metadata, char path[], CLUSTER *cluster)
 {
 	FILE *arq;
 	INDEX index;
-	int i;
+	int i, j;
+	char path_aux[MAX_INPUT] = { 0 };
 
-	if (!(arq = fopen("LIGHTFS.BIN","r+"))) {
+	if (!(arq = fopen("LIGHTFS.BIN","r"))) {
 		printf("File open error\n");
 		return 0;
 	}
@@ -616,8 +607,29 @@ int cd_aux(METADATA metadata, char path[], CLUSTER *cluster)
 		fclose(arq);
 		return 1;
 	}
+	
 	index = absPath2point(metadata, path, 0, arq);
 	fclose(arq);
+
+	if (index == 0) { /* testar se realmente foi chamado root */
+		i = 0;
+		j = 0;
+		if (path[i] == '/') {
+			i++;
+		}
+		while (path[i] != '/' && path[i] != 0) {
+			path_aux[j] = path[i];
+			i++;
+			j++;
+		}
+		path_aux[j] = 0;
+		if (strcmp(path_aux, "ROOT.DIR") != 0) {
+			printf("Erro: Diretorio nao encontrado.\n");
+			return 0;
+		} else {
+			return cd_func(metadata, index, cluster);
+		}
+	}
 	return cd_func(metadata, index, cluster);
 }
 
@@ -676,7 +688,13 @@ void disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[])
 	}
 	i = busca_file(metadata, *father, lightfs, nome, ext);
 	fclose(lightfs);
-
+	if (i == 0) {
+		if (strcmp(nome, "ROOT") == 0 && strcmp(ext, "DIR") == 0) {
+			disp_func(metadata, i);
+		} else {
+			return;
+		}
+	}
 	disp_func(metadata, i);
 }
 

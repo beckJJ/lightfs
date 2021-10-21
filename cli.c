@@ -55,6 +55,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char *filename; 
 	char *input_aux;
 	char *ext; 
+	char *path;
 	int i, j;
 	INDEX index_aux;
 
@@ -81,12 +82,29 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 
 	if (strcmp(comando, "CD") == 0) {
 		comando = strtok(NULL, " ");
-		cd_aux(metadata, comando, cluster);
+		if (comando == NULL) {
+			printf("Erro: Caminho nao informado\n");
+			return;
+		}
+		path = malloc(strlen(comando));
+		strcpy(path, comando);	
+		if (path[0] != '/' && path[0] != '.') {
+			printf("Erro: Caminho nao informado\n");
+			//free(path);
+			return;
+		}
+		cd_aux(metadata, path, cluster);
+
+	//	free(path);
 		return;
 	}
 	if (strcmp(comando, "DIR") == 0 || strcmp(comando, "LS")  == 0) {
 		printf("Conteudo do diretorio %s.%s:\n", cluster->filename, cluster->extension);
 		dir_func(*cluster, metadata);
+		// ignorar o resto
+		while (comando != NULL) {
+			comando = strtok(NULL, "");
+		}
 		return;
 	}
 	if (strcmp(comando, "RM") == 0) {
@@ -179,6 +197,10 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		strcpy(ext, comando);
 
 		comando = strtok(NULL, "\"");
+		if (comando == NULL) {
+			printf("Erro: Conteudo nao informado\n");
+			return;
+		}
 		input_aux = strtok(input_lower, " ");
 		input_aux = strtok(NULL, " ");
 		input_aux = strtok(NULL, "\"");
