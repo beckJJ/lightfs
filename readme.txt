@@ -17,12 +17,4 @@ CD  - Troca o diretório atual para o caminho especificado.
       o diretório atual for /ROOT.DIR/PASTA.DIR/, troca para /ROOT.DIR/. Se o
       diretório atual for /ROOT.DIR/ a função não faz nada.
 
-      Atenção: É necessário utilizar o caminho absoluto, sempre começando com
-      "/ROOT.DIR/".
-
 DIR - Mostra os conteúdos do diretório atual
-
-
-- COMANDOS QUE ESTÃO CRASHANDO
-move /root.dir/pasta1.dir/arquivo.txt /root.dir/pasta2.dir
-cd root.dir
