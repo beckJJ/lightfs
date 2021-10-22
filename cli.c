@@ -54,11 +54,14 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char *filename, *filename_new; 
 	char *input_aux;
 	char *ext, *ext_new; 
-	char *path, *path_old, *path_new;
+	char path[MAX_INPUT], path_old[MAX_INPUT], path_new[MAX_INPUT];
 	int i, j;
 	INDEX index_aux;
 
+	fflush(stdin);
 	gets(input_lower);
+	fflush(stdin);
+	
 	if (strlen(input_lower) == 0) {
 		return;
 	}
@@ -67,7 +70,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 		//exit(1);
 	}
-	input_aux = malloc(strlen(input_lower));
+
 	//strcpy(input_aux, input_lower);
 	for (i = 0; i < strlen(input_lower); i++) {
 		input[i] = toupper(input_lower[i]);
@@ -85,13 +88,14 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Caminho nao informado\n");
 			return;
 		}
-		path = malloc(strlen(comando));
-		strcpy(path, comando);	
-		if (path[0] != '/' && path[0] != '.') {
+
+		strcpy(path, comando);
+
+/*		if (path[0] != '/' && path[0] != '.') {
 			printf("Erro: Caminho nao informado\n");
 			//free(path);
 			return;
-		}
+		}  */
 		cd_aux(metadata, path, cluster);
 
 	//	free(path);
@@ -178,6 +182,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "EDIT") == 0) {
+		input_aux = malloc(strlen(input_lower));
 		comando = strtok(NULL, ".");
 		if (comando == NULL) {
 			printf("Erro: Nome nao informado\n");
@@ -238,23 +243,23 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Caminho antigo nao informado\n");
 			return;
 		}
-		path_old = malloc(strlen(comando));
+		//path_old = malloc(strlen(comando));
 		strcpy(path_old, comando);	
-		if (path_old[0] != '/' && path_old[0] != '.') {
+	/*	if (path_old[0] != '/' && path_old[0] != '.') {
 			printf("Erro: Caminho antigo nao informado\n");
 			return;
-		}
+		}  */
 		comando = strtok(NULL, " ");
 		if (comando == NULL) {
 			printf("Erro: Caminho novo nao informado\n");
 			return;
 		}
-		path_new = malloc(strlen(comando));
+		//path_new = malloc(strlen(comando));
 		strcpy(path_new, comando);	
-		if (path_new[0] != '/' && path_new[0] != '.') {
+/*		if (path_new[0] != '/' && path_new[0] != '.') {
 			printf("Erro: Caminho novo nao informado\n");
 			return;
-		}
+		} */
 		if (move_aux(metadata, path_old, path_new, cluster)) {
 			printf("Arquivo movido com sucesso.\n");
 		}
@@ -301,7 +306,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Arquivo %s.%s renomeado para %s.%s com sucesso.\n", 
 										 filename, ext, filename_new, ext_new);
 		} else {
-			printf("Erro: Arquivo nao encontrado\n");
+		//	printf("Erro: Arquivo nao encontrado\n");
 		}
 
 		return;

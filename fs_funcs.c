@@ -497,109 +497,112 @@ int cd_func(METADATA metadata, INDEX point, CLUSTER *cluster)
 	}
 }
 
-INDEX absPath2point(METADATA metadata, const char path[], INDEX index, FILE *arq)
+INDEX absPath2point(METADATA metadata, char path[], FILE *arq)
 {
-	CLUSTER aux, aux2;
-	//char *str, *str2;
-	char str[MAX_INPUT] = { 0 };
-	char str2[MAX_INPUT] = { 0 };
 	char path_upper[MAX_INPUT] = { 0 };
-	int i, j;
-	int flag;
-	INDEX index_aux;
 	char filename[TAM_FILENAME] = { 0 };
 	char extension[TAM_EXT] = { 0 };
-	char filename_aux[TAM_FILENAME] = { 0 };
-	char ext_aux[TAM_EXT] = { 0 };
+	int i, j;
+	CLUSTER cluster, aux;
+	INDEX index;
 
-	if (path[0] == 0) {
-		return index;
+	if (path[0] == 0) { /* se estiver vazio */
+		return 0;
 	}
 	for (i = 0; path[i] != 0; i++) {
 		path_upper[i] = toupper(path[i]);
 	}
+	/* carregar aux com root */
+	aux = busca_cluster(0, metadata, arq);
 
-	/* encontrar o cluster de index */
-	aux = busca_cluster(index, metadata, arq);
-	
-	if (strcmp(aux.extension, "DIR") != 0) {
-		return aux.index;
-	}
-
-	strcpy(str, path_upper);
-	/* ignorar o primeiro root.dir */
+	/* ler primeiro caminho do endereco */
 	i = 0;
 	j = 0;
-	if (str[i] == '/') {
+	if (path_upper[i] == '/') {
 		i++;
 	}
-	while (str[i] != '/' && str[i] != 0) {
-		i++;
-	}
-	/* pegar o filename do primeiro elemento */
-	if (str[i] == '/') {
-		i++;
-	}
-	while (str[i] != '/' && str[i] != 0) {
-		str2[j] = str[i];
+	/* pegar primeiro filename e ext */
+	while (path_upper[i] != '.' && path_upper[i] != 0 && j < TAM_FILENAME) {
+		filename[j] = path_upper[i];
 		i++;
 		j++;
 	}
-	str2[j] = 0;
-
-	i = 0;
+	if (j >= TAM_FILENAME || path_upper[i] == 0) { /* nao pode acabar em \0 */
+		printf("Erro: O caminho especificado nao e valido1.\n");
+		return 0;
+	}
+	i++;
 	j = 0;
-	while (str2[i] != '.' && str2[i] != 0) {
-		if (str2[i] == '/') {
+	while (path_upper[i] != '/' && path_upper[i] != 0 && j < TAM_EXT) {
+		extension[j] = path_upper[i];
+		i++;
+		j++;
+	}
+	if (j >= TAM_EXT) {
+		printf("Erro: O caminho especificado nao e valido2.\n");
+		return 0;
+	}
+	/* verificar se root foi informado */
+	if (strcmp(filename, "ROOT") != 0 && strcmp(extension, "DIR") != 0) {
+		printf("Erro: O caminho especificado nao e valido3.\n");
+		return 0;
+	}
+	/* limpar filename e ext */
+	for (j = 0; j < TAM_FILENAME; j++) {
+		filename[j] = 0;
+	}
+	for (j = 0; j < TAM_EXT; j++) {
+		extension[j] = 0;
+	}
+	/* fazer o mesmo ate o final do caminho */
+	while (path_upper[i] != 0) {
+		j = 0;
+		if (path_upper[i] == '/') {
 			i++;
-		} else {
-			filename[j] = str2[i];
+		}
+		if (path_upper[i] == 0) {
+			break;
+		}
+		while (path_upper[i] != '.' && path_upper[i] != 0 && j < TAM_FILENAME) {
+			filename[j] = path_upper[i];
 			i++;
 			j++;
 		}
-	}
-	filename[j] = 0;
-	i++;
-	j = 0;
-	while (str2[i] != '.' && str2[i] != 0 && str2[i] != '/') {
-		extension[j] = str2[i];
+		if (j >= TAM_FILENAME || path_upper[i] == 0) {
+			printf("Erro: O caminho especificado nao e valido4.\n");
+			return 0;
+		}
 		i++;
-		j++;
-	}
-	if (filename[0] != 0 && extension[0] != 0) {
-		index_aux = busca_file(metadata, aux, arq, filename, extension);
-	} else {
-		return aux.index;
-	}
+		j = 0;
+		while (path_upper[i] != '/' && path_upper[i] != 0 && j < TAM_EXT) {
+			extension[j] = path_upper[i];
+			i++;
+			j++;
+		}
+		if (j >= TAM_EXT) {
+			printf("Erro: O caminho especificado nao e valido5.\n");
+			return 0;
+		}
+		index = busca_file(metadata, aux, arq, filename, extension);
+		/* limpar filename e ext */
+		for (j = 0; j < TAM_FILENAME; j++) {
+			filename[j] = 0;
+		}
+		for (j = 0; j < TAM_EXT; j++) {
+			extension[j] = 0;
+		}
+		/* verificar se o caminho termina com '/' */
+		if (path_upper[i] == '/') {
+			i++;
+		}
 
-	if (index_aux) {
-		aux2 = busca_cluster(index_aux, metadata, arq);
-	} else {
-		return aux.index;
+		if (index) {
+			aux = busca_cluster(index, metadata, arq);
+		} else {
+			return aux.index;
+		}
 	}
-
-	/* ignorar o primeiro root.dir */
-	i = 0;
-	j = 0;
-	if (str[i] == '/') {
-		i++;
-	}
-	while (str[i] != '/' && str[i] != 0) {
-		i++;
-	}
-	/* pegar o caminho a partir do primeiro elemento */
-	while (str[i] != 0) {
-		str2[j] = str[i];
-		i++;
-		j++;
-	}
-	str2[j] = 0;
-
-	if (str2) {
-		return absPath2point(metadata, str2, aux2.index, arq);
-	} else {
-		return aux2.index;
-	}
+	return aux.index;
 }
 
 int cd_aux(METADATA metadata, char path[], CLUSTER *cluster)
@@ -619,7 +622,7 @@ int cd_aux(METADATA metadata, char path[], CLUSTER *cluster)
 		return 1;
 	}
 	
-	index = absPath2point(metadata, path, 0, arq);
+	index = absPath2point(metadata, path, arq);
 	fclose(arq);
 
 	if (index == 0) { /* testar se realmente foi chamado root */
@@ -836,8 +839,8 @@ int move_aux(METADATA metadata, char path_old[], char path_new[], CLUSTER *clust
 		return 0;
 	}
 	
-	index_cluster = absPath2point(metadata, path_old, 0, arq);
-	index_father = absPath2point(metadata, path_new, 0, arq);
+	index_cluster = absPath2point(metadata, path_old, arq);
+	index_father = absPath2point(metadata, path_new, arq);
 	fclose(arq);
 
 	if (index_cluster == 0) { /* testar se realmente foi chamado root */
@@ -886,37 +889,3 @@ int move_aux(METADATA metadata, char path_old[], char path_new[], CLUSTER *clust
 	refresh_cluster(cluster, metadata);
 	return k;
 }
-
-/*
-int main(void)
-{
-	METADATA metadata;
-	FILE *lightfs;
-	CLUSTER root;
-	unsigned long int root_add;
-
-	// abrir arquivo 
-	if (!(lightfs = fopen("LIGHTFS.BIN","r"))) {
-		printf("File open error\n");
-		exit(1);
-	}
-	// ler metadata do arquivo 
-	if (!fread(&metadata, sizeof(METADATA), 1, lightfs)) {
-		printf("File read error\n");
-		exit(1);
-	}
-	// copiar cluster root para a memoria 
-	root_add = findAbsAdd(0, metadata); // root = cluster 0 
-	fseek(lightfs, root_add, SEEK_SET);
-	if (!fread(&root, sizeof(CLUSTER), 1, lightfs)) {
-		printf("File read error\n");
-		exit(1);
-	}
-	printf("Ret com root: ");
-	printf("%d\n", absPath2point(metadata, "/root.dir/", 0, lightfs));
-	printf("Ret com root/pasta/asdf: ");
-	printf("%d\n", absPath2point(metadata, "/root.dir/pasta.dir/asdf.dir", 0, lightfs));
-	fclose(lightfs);
-	return 0;
-}
-*/
