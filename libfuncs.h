@@ -14,6 +14,8 @@ void nome_cluster(INDEX point, METADATA metadata, FILE *arq, char n[]);
 
 void ext_cluster(INDEX point, METADATA metadata, FILE *arq, char n[]);
 
+void refresh_cluster(CLUSTER *cluster, METADATA metadata);
+
 INDEX busca_file(METADATA metadata, CLUSTER father, FILE *arq,
 													   char nome[], char ext[]);
 
@@ -43,3 +45,7 @@ int disp_aux(CLUSTER *father, METADATA metadata, char nome[], char ext[]);
 
 int rename_aux(CLUSTER *father, METADATA metadata, char nome_old[],
 							  char ext_old[], char nome_new[], char ext_new[]);
+
+int move_func(METADATA metadata, INDEX point, INDEX p_father_new);
+
+int move_aux(METADATA metadata, char path_old[], char path_new[], CLUSTER *cluster);

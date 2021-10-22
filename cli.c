@@ -1,10 +1,9 @@
 // para compilar:
-// gcc cli.c fs_funcs.c -o cli.o
+// gcc cli.c fs_funcs.c -o cli.exe
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <conio.h>
-#include <windows.h>
 #include <string.h>
 #include <ctype.h>
 #include "libfs.h"
@@ -55,7 +54,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	char *filename, *filename_new; 
 	char *input_aux;
 	char *ext, *ext_new; 
-	char *path;
+	char *path, *path_old, *path_new;
 	int i, j;
 	INDEX index_aux;
 
@@ -234,7 +233,31 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		return;
 	}
 	if (strcmp(comando, "MOVE") == 0) {
-		printf(" %s 6", comando);
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
+			printf("Erro: Caminho antigo nao informado\n");
+			return;
+		}
+		path_old = malloc(strlen(comando));
+		strcpy(path_old, comando);	
+		if (path_old[0] != '/' && path_old[0] != '.') {
+			printf("Erro: Caminho antigo nao informado\n");
+			return;
+		}
+		comando = strtok(NULL, " ");
+		if (comando == NULL) {
+			printf("Erro: Caminho novo nao informado\n");
+			return;
+		}
+		path_new = malloc(strlen(comando));
+		strcpy(path_new, comando);	
+		if (path_new[0] != '/' && path_new[0] != '.') {
+			printf("Erro: Caminho novo nao informado\n");
+			return;
+		}
+		if (move_aux(metadata, path_old, path_new, cluster)) {
+			printf("Arquivo movido com sucesso.\n");
+		}
 		return;
 	}
 	if (strcmp(comando, "RENAME") == 0) {

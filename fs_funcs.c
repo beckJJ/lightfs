@@ -46,6 +46,17 @@ void ext_cluster(INDEX point, METADATA metadata, FILE *arq, char n[])
 	strcpy(n, cluster.extension);
 }
 
+void refresh_cluster(CLUSTER *cluster, METADATA metadata)
+{
+	FILE *arq;
+	if (!(arq = fopen("LIGHTFS.BIN","r"))) {
+		printf("File open error\n");
+		return;
+	}
+	*cluster = busca_cluster(cluster->index, metadata, arq);
+	fclose(arq);
+}
+
 INDEX busca_file(METADATA metadata, CLUSTER father, FILE *arq,
 													   char nome[], char ext[])
 { /* recebe um nome e extensao e retorna o ponteiro do cluster */
@@ -724,6 +735,157 @@ int rename_aux(CLUSTER *father, METADATA metadata, char nome_old[],
 	return 1;
 }
 
+int move_func(METADATA metadata, INDEX point, INDEX p_father_new)
+{
+	FILE *lightfs;
+	unsigned long int address;
+	CLUSTER cluster, father_old, father_new;
+	int i, j;
+	char nome2[TAM_FILENAME] = { 0 };
+	char ext2[TAM_EXT] = { 0 };
+
+	if (!(lightfs = fopen("LIGHTFS.BIN", "r+"))) {
+		printf("File open error\n");
+		return 0;
+	}
+	/* receber cluster do ponteiro */
+	cluster = busca_cluster(point, metadata, lightfs);
+	/* testar se o cluster e root */
+	if (cluster.flags & 0x80) {
+		printf("Erro: Nao e permitido mover root\n");
+		fclose(lightfs);
+		return 0;
+	}
+	/* testar se o cluster ja esta vazio */
+	if (!(cluster.flags & 0x01)) {
+		printf("Erro: Cluster vazio\n");
+		fclose(lightfs);
+		return 0;
+	}
+	/* receber cluster father_old */
+	father_old = busca_cluster(cluster.father, metadata, lightfs);
+	/* receber cluster father_new */
+	father_new = busca_cluster(p_father_new, metadata, lightfs);
+
+	/* testar se father_new e um diretorio */
+	if (strcmp(father_new.extension, "DIR") != 0) {
+		printf("Erro: So e possivel mover para diretorio.\n");
+		return 0;
+	}
+
+	/* chegar no primeiro bloco vazio do father_new */
+	for (j = 0; father_new.content[j] != 0; j++) {
+		/* comparar se tem um arquivo com o mesmo nome e extensao */
+		nome_cluster(father_new.content[j], metadata, lightfs, nome2);
+		ext_cluster(father_new.content[j], metadata, lightfs, ext2);
+		if (!strcmp(cluster.filename, nome2) && !strcmp(cluster.extension, ext2)) {
+			printf("Erro: Ja existe um arquivo com esse nome e extensao em %s.%s\n",
+											father_new.filename, father_new.extension);
+			fclose(lightfs);
+			return 0;
+		}
+	}
+	/* limpar ponteiro em father_old */
+	i = 0;
+	while (father_old.content[i] != cluster.index && i < TAM_CONTENT) {
+		i++;
+	}
+	if (father_old.content[i] == cluster.index) {
+		father_old.content[i] = 0;
+		do {
+			father_old.content[i] = father_old.content[i+1];
+			i++;
+		} while (father_old.content[i]);
+		if (father_old.content[0] == 0) {
+			father_old.flags &= 0xFD; /* limpar nas flags */
+		}
+		/* escrever novo father_old no arquivo */
+		address = findAbsAdd(father_old.index, metadata);
+		fseek(lightfs, address, SEEK_SET);
+		fwrite(&father_old, sizeof(CLUSTER), 1, lightfs);
+	} else {
+		printf("Erro: Cluster nao encontrado\n");
+		fclose(lightfs);
+		return 0;
+	}
+	/* escrever ponteiro em father_new */
+	father_new.content[j] = cluster.index;
+	father_new.flags |= 0x02;
+	address = findAbsAdd(father_new.index, metadata);
+	fseek(lightfs,address, SEEK_SET);
+	fwrite(&father_new, sizeof(CLUSTER), 1, lightfs);
+	/* escrever cluster com novo father */
+	cluster.father = father_new.index;
+	address = findAbsAdd(cluster.index, metadata);
+	fseek(lightfs, address, SEEK_SET);
+	fwrite(&cluster, sizeof(CLUSTER), 1, lightfs);
+	fclose(lightfs);
+	return 1;
+}
+
+int move_aux(METADATA metadata, char path_old[], char path_new[], CLUSTER *cluster)
+{
+	FILE *arq;
+	INDEX index_cluster, index_father;
+	int i, j, k;
+	char path_aux_1[MAX_INPUT] = { 0 };
+	char path_aux_2[MAX_INPUT] = { 0 };
+
+	if (!(arq = fopen("LIGHTFS.BIN","r"))) {
+		printf("File open error\n");
+		return 0;
+	}
+	
+	index_cluster = absPath2point(metadata, path_old, 0, arq);
+	index_father = absPath2point(metadata, path_new, 0, arq);
+	fclose(arq);
+
+	if (index_cluster == 0) { /* testar se realmente foi chamado root */
+		i = 0;
+		j = 0;
+		if (path_old[i] == '/') {
+			i++;
+		}
+		while (path_old[i] != '/' && path_old[i] != 0) {
+			path_aux_1[j] = path_old[i];
+			i++;
+			j++;
+		}
+		path_aux_1[j] = 0;
+		if (strcmp(path_aux_1, "ROOT.DIR") != 0) {
+			printf("Erro: Arquivo nao encontrado.\n");
+			return 0;
+		} else {
+			k = move_func(metadata, index_cluster, index_father);
+			refresh_cluster(cluster, metadata);
+			return k;
+		}
+	}
+	if (index_father == 0) { /* testar se realmente foi chamado root */
+		i = 0;
+		j = 0;
+		if (path_new[i] == '/') {
+			i++;
+		}
+		while (path_new[i] != '/' && path_new[i] != 0) {
+			path_aux_2[j] = path_new[i];
+			i++;
+			j++;
+		}
+		path_aux_2[j] = 0;
+		if (strcmp(path_aux_2, "ROOT.DIR") != 0) {
+			printf("Erro: Diretorio nao encontrado.\n");
+			return 0;
+		} else {
+			k = move_func(metadata, index_cluster, index_father);
+			refresh_cluster(cluster, metadata);
+			return k;
+		}
+	}
+	k = move_func(metadata, index_cluster, index_father);
+	refresh_cluster(cluster, metadata);
+	return k;
+}
 
 /*
 int main(void)
