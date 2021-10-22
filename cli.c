@@ -17,12 +17,25 @@ void print_interface(void)
 	char key = 0;
 	char *input;
 	system("cls");
-	printf("Arquitetura e Organizacao de Computadores II\n");
-	printf("Trabalho 2 - 2021/1\n");
-	printf("Bruno Grohs Vergara\t\t- 324256\n");
-	printf("Joao Pedro Ferreira Pereira\t- 324521\n");
-	printf("Pedro Company Beck\t\t- 324055\n");
-	printf("\nAperte ENTER para comecar\n");
+	printf("\t\t  Arquitetura e Organizacao de Computadores II\n");
+	printf("\t\t\t\tTrabalho 2 - 2021/1\n");
+	printf("\n\n\n\n\n");
+	printf("        __        __   _______   _     _   _______   _______   _______ \n");
+	printf("       |  |      |  | |  _____| | |   | | |___ ___| |  _____| |  _____|\n");
+	printf("       |  |      |  | | |       | |   | |    | |    | |       | |      \n");
+	printf("       |  |      |  | | |  ___  | |___| |    | |    | |_____  | |_____ \n");
+	printf("       |  |      |  | | | |_  | |  ___  |    | |    |  _____| |_____  |\n");
+	printf("       |  |      |  | | |   | | | |   | |    | |    | |             | |\n");
+	printf("       |  |____  |  | | |___| | | |   | |    | |    | |        _____| |\n");
+	printf("       |_______| |__| |_______| |_|   |_|    |_|    |_|       |_______|\n");
+	printf("\n\n\n\n\n");
+	printf("                                          ");
+	printf("Bruno Grohs Vergara          - 324256\n");
+	printf("                                          ");
+	printf("Joao Pedro Ferreira Pereira  - 324521\n");
+	printf("                                          ");
+	printf("Pedro Company Beck           - 324055\n");
+	printf("\nAperte ENTER para comecar... ");
 
 	while (key != ENTER) {
 		fflush(stdin);
@@ -33,6 +46,7 @@ void print_interface(void)
 
 void print_help(void)
 {
+	printf("Comandos disponiveis:\n");
 	printf("CD\t- Troca de diretorio\n");
 	printf("CLS\t- Limpa a tela\n");
 	printf("DIR\t- Mostra o conteudo do diretorio\n");
@@ -45,15 +59,16 @@ void print_help(void)
 	printf("RENAME\t- Renomeia um arquivo ou diretorio\n");
 	printf("RM\t- Remove um arquivo ou diretorio\n");
 	printf("\nEXIT\t- Termina a execucao\n");
+	printf("\n\nMais informacoes no arquivo README.TXT\n"); 
 }
 
 void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 {
 	char input_lower[MAX_INPUT] = { 0 };
 	char *comando;
-	char *filename, *filename_new; 
+	char filename[TAM_FILENAME], filename_new[TAM_FILENAME]; 
 	char *input_aux;
-	char *ext, *ext_new; 
+	char ext[TAM_EXT], ext_new[TAM_EXT]; 
 	char path[MAX_INPUT], path_old[MAX_INPUT], path_new[MAX_INPUT];
 	int i, j;
 	INDEX index_aux;
@@ -91,11 +106,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 
 		strcpy(path, comando);
 
-/*		if (path[0] != '/' && path[0] != '.') {
-			printf("Erro: Caminho nao informado\n");
-			//free(path);
-			return;
-		}  */
 		cd_aux(metadata, path, cluster);
 
 	//	free(path);
@@ -116,7 +126,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Arquivo nao informado\n");
 			return;
 		}
-		filename = malloc(strlen(comando));
+	//	filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -125,7 +135,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-		ext = malloc(strlen(comando));
+	//	ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 		// ignorar o resto
 		while (comando != NULL) {
@@ -142,7 +152,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-		filename = malloc(strlen(comando));
+	//	filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		// ignorar o resto
@@ -160,7 +170,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-		filename = malloc(strlen(comando));
+		//filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -169,7 +179,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-		ext = malloc(strlen(comando));
+		//ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 		// ignorar o resto
 		while (comando != NULL) {
@@ -188,7 +198,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-		filename = malloc(strlen(comando));
+	//	filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -197,7 +207,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-		ext = malloc(strlen(comando));
+	//	ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 
 		comando = strtok(NULL, "\"");
@@ -220,7 +230,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-		filename = malloc(strlen(comando));
+	//	filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -229,7 +239,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-		ext = malloc(strlen(comando));
+	//	ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 
 		if (!disp_aux(cluster, metadata, filename, ext)) {
@@ -243,23 +253,17 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Caminho antigo nao informado\n");
 			return;
 		}
-		//path_old = malloc(strlen(comando));
+
 		strcpy(path_old, comando);	
-	/*	if (path_old[0] != '/' && path_old[0] != '.') {
-			printf("Erro: Caminho antigo nao informado\n");
-			return;
-		}  */
+
 		comando = strtok(NULL, " ");
 		if (comando == NULL) {
 			printf("Erro: Caminho novo nao informado\n");
 			return;
 		}
-		//path_new = malloc(strlen(comando));
+
 		strcpy(path_new, comando);	
-/*		if (path_new[0] != '/' && path_new[0] != '.') {
-			printf("Erro: Caminho novo nao informado\n");
-			return;
-		} */
+
 		if (move_aux(metadata, path_old, path_new, cluster)) {
 			printf("Arquivo movido com sucesso.\n");
 		}
@@ -271,7 +275,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Arquivo nao informado\n");
 			return;
 		}
-		filename = malloc(strlen(comando));
+//		filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -279,7 +283,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Extensao nao informada\n");
 			return;
 		}
-		ext = malloc(strlen(comando));
+//		ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 		
 		comando = strtok(NULL, ".");
@@ -287,7 +291,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Novo nome nao informado\n");
 			return;
 		}
-		filename_new = malloc(strlen(comando));
+	//	filename_new = malloc(strlen(comando));
 		strcpy(filename_new, comando);
 		
 		comando = strtok(NULL, ".");
@@ -295,7 +299,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nova extensao nao informada\n");
 			return;
 		}
-		ext_new = malloc(strlen(comando));
+	//	ext_new = malloc(strlen(comando));
 		strcpy(ext_new, comando);
 
 		// ignorar o resto

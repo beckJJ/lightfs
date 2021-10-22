@@ -363,6 +363,11 @@ int rename_func(CLUSTER father, METADATA metadata, INDEX point,
 		fclose(lightfs);
 		return 0;
 	}
+	if (strcmp(cluster.extension, "DIR") && !(strcmp(ext_upper, "DIR"))) {
+		printf("Erro: Nao e possivel trocar extensao de arquivo texto para .DIR\n");
+		fclose(lightfs);
+		return 0;
+	}
 	/* modificar nome e extensao */
 	strcpy(cluster.filename, nome_upper);
 	strcpy(cluster.extension, ext_upper);
@@ -728,14 +733,12 @@ int rename_aux(CLUSTER *father, METADATA metadata, char nome_old[],
 	fclose(lightfs);
 	if (i == 0) {
 		if (strcmp(nome_old, "ROOT") == 0 && strcmp(ext_old, "DIR") == 0) {
-			rename_func(*father, metadata, i, nome_new, ext_new);
-			return 1;
+			return rename_func(*father, metadata, i, nome_new, ext_new);
 		} else {
 			return 0;
 		}
 	}
-	rename_func(*father, metadata, i, nome_new, ext_new);
-	return 1;
+	return rename_func(*father, metadata, i, nome_new, ext_new);
 }
 
 int move_func(METADATA metadata, INDEX point, INDEX p_father_new)
