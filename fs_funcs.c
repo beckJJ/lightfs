@@ -1,3 +1,11 @@
+/* Bruno Gorhs Vergara			- 324256
+ * Joao Pedro Ferreira Pereira	- 324521
+ * Pedro Company Beck			- 324055
+ * 
+ * Programa com as funcoes para operar no arquivo LIGHTFS.BIN que sao chamadas
+ * utilizando a interface de linha de comando.
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -533,7 +541,7 @@ INDEX absPath2point(METADATA metadata, char path[], FILE *arq)
 		j++;
 	}
 	if (j >= TAM_FILENAME || path_upper[i] == 0) { /* nao pode acabar em \0 */
-		printf("Erro: O caminho especificado nao e valido1.\n");
+		printf("Erro: O caminho especificado nao e valido.\n");
 		return 0;
 	}
 	i++;
@@ -544,12 +552,12 @@ INDEX absPath2point(METADATA metadata, char path[], FILE *arq)
 		j++;
 	}
 	if (j >= TAM_EXT) {
-		printf("Erro: O caminho especificado nao e valido2.\n");
+		printf("Erro: O caminho especificado nao e valido.\n");
 		return 0;
 	}
 	/* verificar se root foi informado */
-	if (strcmp(filename, "ROOT") != 0 && strcmp(extension, "DIR") != 0) {
-		printf("Erro: O caminho especificado nao e valido3.\n");
+	if (strcmp(filename, "ROOT") != 0 || strcmp(extension, "DIR") != 0) {
+		printf("Erro: O caminho especificado nao e valido.\n");
 		return 0;
 	}
 	/* limpar filename e ext */
@@ -574,7 +582,7 @@ INDEX absPath2point(METADATA metadata, char path[], FILE *arq)
 			j++;
 		}
 		if (j >= TAM_FILENAME || path_upper[i] == 0) {
-			printf("Erro: O caminho especificado nao e valido4.\n");
+			printf("Erro: O caminho especificado nao e valido.\n");
 			return 0;
 		}
 		i++;
@@ -585,7 +593,7 @@ INDEX absPath2point(METADATA metadata, char path[], FILE *arq)
 			j++;
 		}
 		if (j >= TAM_EXT) {
-			printf("Erro: O caminho especificado nao e valido5.\n");
+			printf("Erro: O caminho especificado nao e valido.\n");
 			return 0;
 		}
 		index = busca_file(metadata, aux, arq, filename, extension);

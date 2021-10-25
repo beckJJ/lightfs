@@ -1,3 +1,10 @@
+/* Bruno Gorhs Vergara			- 324256
+ * Joao Pedro Ferreira Pereira	- 324521
+ * Pedro Company Beck			- 324055
+ * 
+ * Programa para gerar o arquivo LIGHTFS.BIN.
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

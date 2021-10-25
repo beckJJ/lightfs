@@ -1,5 +1,11 @@
-// para compilar:
-// gcc cli.c fs_funcs.c -o cli.exe
+/* Bruno Gorhs Vergara			- 324256
+ * Joao Pedro Ferreira Pereira	- 324521
+ * Pedro Company Beck			- 324055
+ * 
+ * Programa com a interface de linha de comando para operar o arquivo
+ * LIGHTFS.BIN com as funcoes em libfuncs.h.
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,10 +89,8 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 	if (strlen(input_lower) >= MAX_INPUT) {
 		printf("Erro: Input com mais de 200 caracteres\n");
 		return;
-		//exit(1);
 	}
 
-	//strcpy(input_aux, input_lower);
 	for (i = 0; i < strlen(input_lower); i++) {
 		input[i] = toupper(input_lower[i]);
 	}
@@ -108,7 +112,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 
 		cd_aux(metadata, path, cluster);
 
-	//	free(path);
 		return;
 	}
 	if (strcmp(comando, "DIR") == 0 || strcmp(comando, "LS")  == 0) {
@@ -126,7 +129,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Arquivo nao informado\n");
 			return;
 		}
-	//	filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -134,8 +136,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Extensao nao informada\n");
 			return;
 		}
-
-	//	ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 		// ignorar o resto
 		while (comando != NULL) {
@@ -152,7 +152,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-	//	filename = malloc(strlen(comando));
+
 		strcpy(filename, comando);
 
 		// ignorar o resto
@@ -170,7 +170,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-		//filename = malloc(strlen(comando));
+
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -179,7 +179,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-		//ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 		// ignorar o resto
 		while (comando != NULL) {
@@ -198,7 +197,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-	//	filename = malloc(strlen(comando));
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -207,7 +205,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-	//	ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 
 		comando = strtok(NULL, "\"");
@@ -230,7 +227,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nome nao informado\n");
 			return;
 		}
-	//	filename = malloc(strlen(comando));
+
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -239,7 +236,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			return;
 		}
 
-	//	ext = malloc(strlen(comando));
 		strcpy(ext, comando);
 
 		if (!disp_aux(cluster, metadata, filename, ext)) {
@@ -275,7 +271,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Arquivo nao informado\n");
 			return;
 		}
-//		filename = malloc(strlen(comando));
+
 		strcpy(filename, comando);
 
 		comando = strtok(NULL, " ");
@@ -283,7 +279,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Extensao nao informada\n");
 			return;
 		}
-//		ext = malloc(strlen(comando));
+
 		strcpy(ext, comando);
 		
 		comando = strtok(NULL, ".");
@@ -291,7 +287,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Novo nome nao informado\n");
 			return;
 		}
-	//	filename_new = malloc(strlen(comando));
+
 		strcpy(filename_new, comando);
 		
 		comando = strtok(NULL, ".");
@@ -299,7 +295,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 			printf("Erro: Nova extensao nao informada\n");
 			return;
 		}
-	//	ext_new = malloc(strlen(comando));
+
 		strcpy(ext_new, comando);
 
 		// ignorar o resto
@@ -309,8 +305,6 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 		if (rename_aux(cluster, metadata, filename, ext, filename_new, ext_new)) {
 			printf("Arquivo %s.%s renomeado para %s.%s com sucesso.\n", 
 										 filename, ext, filename_new, ext_new);
-		} else {
-		//	printf("Erro: Arquivo nao encontrado\n");
 		}
 
 		return;

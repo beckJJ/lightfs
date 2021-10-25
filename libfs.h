@@ -1,3 +1,11 @@
+/* Bruno Gorhs Vergara			- 324256
+ * Joao Pedro Ferreira Pereira	- 324521
+ * Pedro Company Beck			- 324055
+ * 
+ * Biblioteca que contem as definicoes dos metadados e dos clusters do
+ * sistema de arquivos.
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
