@@ -102,5 +102,7 @@ int main(void)
 	} else {
 		printf("Nenhuma operacao foi realizada.\n");
 	}
+	printf("\nAperte qualquer tecla para sair...");
+	getch();
 	return 0;
 }

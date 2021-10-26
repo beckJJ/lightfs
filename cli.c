@@ -238,9 +238,7 @@ void recebe_input(char input[], CLUSTER *cluster, METADATA metadata)
 
 		strcpy(ext, comando);
 
-		if (!disp_aux(cluster, metadata, filename, ext)) {
-			printf("Erro: Arquivo nao encontrado\n");
-		}
+		disp_aux(cluster, metadata, filename, ext); 
 		return;
 	}
 	if (strcmp(comando, "MOVE") == 0) {
