@@ -1,4 +1,4 @@
-/ * Programa para gerar o arquivo LIGHTFS.BIN.
+/* Programa para gerar o arquivo LIGHTFS.BIN.
  */
 #include <stdio.h>
 #include <stdlib.h>
