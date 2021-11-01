@@ -1,4 +1,4 @@
-// convert LIGHTFS.BIN LE <-> BE
+// convert LIGHTFS.BIN LE <-> BE (untested)
 #include <stdio.h>
 #include <stdlib.h>
 
