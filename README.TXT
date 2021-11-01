@@ -1,3 +1,10 @@
+// Porto Alegre, outubro de 2021
+// Light-FS
+//
+// Bruno Gorhs Vergara
+// Joao Pedro Ferreira Pereira
+// Pedro Company Beck
+
 Como utilizar o programa:
 1 - Crie o arquivo binário LIGHTFS.BIN com o programa GEN.EXE.
 2 - Execute o programa CLI.EXE para manipular o arquivo LIGHTFS.BIN.
