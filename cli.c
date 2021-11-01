@@ -1,10 +1,5 @@
-/* Bruno Gorhs Vergara			- 324256
- * Joao Pedro Ferreira Pereira	- 324521
- * Pedro Company Beck			- 324055
- * 
- * Programa com a interface de linha de comando para operar o arquivo
+/* Programa com a interface de linha de comando para operar o arquivo
  * LIGHTFS.BIN com as funcoes em libfuncs.h.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>
