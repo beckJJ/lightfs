@@ -1,9 +1,9 @@
-// Porto Alegre, outubro de 2021
-// Light-FS
-//
-// Bruno Gorhs Vergara
-// Joao Pedro Ferreira Pereira
-// Pedro Company Beck
+## Porto Alegre, outubro de 2021
+## Light-FS
+##
+## Bruno Gorhs Vergara
+## Joao Pedro Ferreira Pereira
+## Pedro Company Beck
 
 Como utilizar o programa:
 1 - Crie o arquivo binário LIGHTFS.BIN com o programa GEN.EXE.
