@@ -1,10 +1,5 @@
-/* Bruno Gorhs Vergara			- 324256
- * Joao Pedro Ferreira Pereira	- 324521
- * Pedro Company Beck			- 324055
- * 
- * Programa com as funcoes para operar no arquivo LIGHTFS.BIN que sao chamadas
+/* Programa com as funcoes para operar no arquivo LIGHTFS.BIN que sao chamadas
  * utilizando a interface de linha de comando.
- * 
  */
 #include <stdio.h>
 #include <stdlib.h>
