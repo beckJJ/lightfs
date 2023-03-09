@@ -1,7 +1,7 @@
 // Porto Alegre, outubro de 2021
 // Light-FS
 //
-// Bruno Gorhs Vergara
+// Bruno Grohs Vergara
 // Joao Pedro Ferreira Pereira
 // Pedro Company Beck
 
